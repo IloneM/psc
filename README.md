@@ -4,7 +4,7 @@
 
 ### Instructions d'initialisation
 
-1.  Créer un compte [github](https://github.com/)
+1.  Créer un compte [github](https://github.com/) et m'envoyer votre nom/email utilisés pour ouvrir votre compte github par email
 2. 	Installer [git](http://git-scm.com/)
 3.  Installer [TortoiseGit](https://tortoisegit.org/download/)
 4.  Une fois TortoiseGit installé, ouvrir file explorer et se rendre dans un répertoire dédié au PSC (à créer le cas échéant..) puis cliquer droit à un endroit vide
@@ -31,6 +31,8 @@
 4.  
 
 #### Envoyer ses propres modifications (push)
+
+**Ne fonctionne que si je vous ai déclaré comme collaborateur du projet**
 
 1.  Se rendre dans le dossier de travail via File Explorer
 2.  Cliquer droit à un endroit vide puis sélectionner 'Git Commit -> "master"...'
