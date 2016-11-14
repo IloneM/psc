@@ -9,12 +9,11 @@
 1.  Créer un compte [github](https://github.com/) et m'envoyer par email vos nom/email utilisés pour ouvrir votre compte github
 2.	Si [git](http://git-scm.com/) n'est pas installé (ce qui ne devrait être le cas pour personne), l'installer conformément aux instructions pour [linux](https://git-scm.com/download/linux) ou pour [OS X](https://git-scm.com/download/mac)
 3.	Ouvrir un terminal et taper:
-```bash
-git config --global user.name "YOUR-NAME"
-git config --global user.email "YOUR-EMAIL-ADDRESS"
-```
-**En remplaçant YOUR-NAME et YOUR-EMAIL-ADRESS par ceux utilisés pour github (Cf 1.)** 
-
+	```bash
+	git config --global user.name "YOUR-NAME"
+	git config --global user.email "YOUR-EMAIL-ADDRESS"
+	```
+	**En remplaçant YOUR-NAME et YOUR-EMAIL-ADRESS par ceux utilisés pour github (Cf 1.)** 
 4. Toujours dans un terminal taper:
 ```bash
 git clone https://github.com/IloneM/psc.git PATH-TO-WDIR
