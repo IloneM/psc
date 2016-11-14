@@ -13,12 +13,16 @@
 git config --global user.name "YOUR-NAME"
 git config --global user.email "YOUR-EMAIL-ADDRESS"
 ```
-**En remplaçant YOUR-NAME et YOUR-EMAIL-ADRESS par ceux utilisés pour github (Cf 1.)**
+
+**En remplaçant YOUR-NAME et YOUR-EMAIL-ADRESS par ceux utilisés pour github (Cf 1.)** 
+
 4. Toujours dans un terminal taper:
 ```bash
 git clone https://github.com/IloneM/psc.git PATH-TO-WDIR
 ```
-**En remplaçant PATH-TO-WDIR par le chemin d'accès à votre dossier de travail pour le code PSC**
+
+**En remplaçant PATH-TO-WDIR par le chemin d'accès à votre dossier de travail pour le code PSC** 
+
 Le message suivant devrait apparaître:
 > Unpacking objects: 100% (*un nombre*/*un nombre*), done.
 
@@ -35,7 +39,9 @@ Si vous n'êtes pas à l'X:
 ```bash
 git config --global --unset http.proxy
 ```
-**Si aucune de ces solutions ne marche, me contacter svp.**
+
+**Si aucune de ces solutions ne marche, me contacter svp.** 
+
 5. Enfin, toujours dans un terminal taper:
 ```bash
 git config --global credential.helper cache
@@ -64,7 +70,7 @@ Si des difficultés sont rencontrées, se reporter à la fin de la section *Inst
 
 ##### Envoyer ses propres modifications (push)
 
-**Ne fonctionne que si je vous ai déclaré comme collaborateur du projet**
+**Ne fonctionne que si je vous ai déclaré comme collaborateur du projet** 
 
 1.  Se rendre dans le dossier de travail via la commande [cd](http://linuxcommand.org/lc3_man_pages/cdh.html)
 2.	Taper dans un terminal:
@@ -73,7 +79,8 @@ git add .
 git commit -a -m "COMMIT-MSG"
 git push
 ```
-**Où COMMIT-MSG est un court message décrivant les modifications apportées**
+**Où COMMIT-MSG est un court message décrivant les modifications apportées** 
+
 La première fois, git devrait demander un mot de passe et éventuellement un nom d'utilisateur. Dans les deux cas donner ceux utilisés pour le compte github.
 3. Si tout se passe bien le message suivant devrait apparaître:
 > To https://github.com/IloneM/psc.git
@@ -83,7 +90,7 @@ Si tel n'est pas le cas:
 * Soit vos identifiants sont erronés auquel cas réessayer
 * Soit vous ne vous êtes pas déclarés comme contributeurs, auquel cas je vous invite à m'envoyer vos ids par email comme mentionné en début de section
 * Soit le proxy est mal configuré, auquel cas relire la fin de la section *Instructions d'initialisation*
-* **Une fois toutes ces possibilités écartées et si le problème persiste, me contacter**
+* **Une fois toutes ces possibilités écartées et si le problème persiste, me contacter** 
 
 ### Instructions pour Windows
 
