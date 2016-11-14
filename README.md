@@ -28,7 +28,8 @@
 	> Unpacking objects: 100% (*un nombre*/*un nombre*), done.
 
 	Si tel n'est pas le cas, cela peut-être dû à un problème de proxy:
-	Si vous êtes à l'X:
+
+	+ Si vous êtes à l'X:
 		1. Vérifier que le proxy est bien configuré en regardant par exemple si [](https://google.com) est accessible
 		2. Si le proxy est bien configuré, essayer de taper dans un terminal:
 
@@ -36,7 +37,7 @@
 			git config --global http.proxy http://kuzh.polytechnique.fr:8080
 			```
 
-	Si vous n'êtes pas à l'X:
+	+ Si vous n'êtes pas à l'X:
 		1. Vérifier que le proxy est bien désactivé en regardant par exemple si [](https://google.com) est accessible
 		2. Si le proxy est bien configuré, essayer de taper dans un terminal:
 
@@ -68,10 +69,11 @@
 
 		Ce qui signifie qu'aucun changement n'a été apporté au code
 
-	*	> Unpacking objects: 100% (*n*/*n*), done.
-		> From https://github.com/IloneM/psc
-		>	*hash code*..*another hash code*  master     -> origin/master
-		> Updating *hash code*..*another hash code*
+	*	
+		>   Unpacking objects: 100% (*n*/*n*), done.
+		    From https://github.com/IloneM/psc
+			  *hash code*..*another hash code*  master     -> origin/master
+		    Updating *hash code*..*another hash code*
 
 		Ce qui signifie que les modification du code ont bien été téléchargées
 
@@ -95,8 +97,8 @@
 	La première fois, git devrait demander un mot de passe et éventuellement un nom d'utilisateur. Dans les deux cas donner ceux utilisés pour le compte github.
 
 3.	Si tout se passe bien le message suivant devrait apparaître:
-	> To https://github.com/IloneM/psc.git
-	>   *hash code*..*another hash code*  master -> master
+	>  To https://github.com/IloneM/psc.git
+	     *hash code*..*another hash code*  master -> master
 
 	Si tel n'est pas le cas:
 	* Soit vos identifiants sont erronés auquel cas réessayer
