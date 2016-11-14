@@ -13,18 +13,15 @@
 git config --global user.name "YOUR-NAME"
 git config --global user.email "YOUR-EMAIL-ADDRESS"
 ```
-**En remplaçant YOUR-NAME et YOUR-EMAIL-ADRESS par ceux utilisés pour github** (Cf 1.)
+**En remplaçant YOUR-NAME et YOUR-EMAIL-ADRESS par ceux utilisés pour github (Cf 1.)**
 4. Toujours dans un terminal taper:
 ```bash
 git clone https://github.com/IloneM/psc.git PATH-TO-WDIR
 ```
 **En remplaçant PATH-TO-WDIR par le chemin d'accès à votre dossier de travail pour le code PSC**
-
 Le message suivant devrait apparaître:
 > Unpacking objects: 100% (*un nombre*/*un nombre*), done.
-
 Si tel n'est pas le cas, cela peut-être dû à un problème de proxy:
-
 Si vous êtes à l'X:
 	1. Vérifier que le proxy est bien configuré en regardant par exemple si [](https://google.com) est accessible
 	2. Si le proxy est bien configuré, essayer de taper dans un terminal:
@@ -42,7 +39,6 @@ git config --global --unset http.proxy
 ```bash
 git config --global credential.helper cache
 ```
-
 
 #### Instructions d'utilisations
 
