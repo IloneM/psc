@@ -21,6 +21,7 @@ git clone https://github.com/IloneM/psc.git PATH-TO-WDIR
 **En remplaçant PATH-TO-WDIR par le chemin d'accès à votre dossier de travail pour le code PSC**
 Le message suivant devrait apparaître:
 > Unpacking objects: 100% (*un nombre*/*un nombre*), done.
+
 Si tel n'est pas le cas, cela peut-être dû à un problème de proxy:
 Si vous êtes à l'X:
 	1. Vérifier que le proxy est bien configuré en regardant par exemple si [](https://google.com) est accessible
@@ -56,6 +57,7 @@ Ce qui signifie qu'aucun changement n'a été apporté au code
 	> From https://github.com/IloneM/psc
 	>	*hash code*..*another hash code*  master     -> origin/master
 	> Updating *hash code*..*another hash code*
+
 Ce qui signifie que les modification du code ont bien été téléchargées
 
 Si des difficultés sont rencontrées, se reporter à la fin de la section *Instructions d'initialisation*
@@ -76,6 +78,7 @@ La première fois, git devrait demander un mot de passe et éventuellement un no
 3. Si tout se passe bien le message suivant devrait apparaître:
 > To https://github.com/IloneM/psc.git
 >   *hash code*..*another hash code*  master -> master
+
 Si tel n'est pas le cas:
 * Soit vos identifiants sont erronés auquel cas réessayer
 * Soit vous ne vous êtes pas déclarés comme contributeurs, auquel cas je vous invite à m'envoyer vos ids par email comme mentionné en début de section
