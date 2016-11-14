@@ -17,35 +17,40 @@
 
 	**En remplaçant YOUR-NAME et YOUR-EMAIL-ADRESS par ceux utilisés pour github (Cf 1.)** 
 4. Toujours dans un terminal taper:
-```bash
-git clone https://github.com/IloneM/psc.git PATH-TO-WDIR
-```
 
-**En remplaçant PATH-TO-WDIR par le chemin d'accès à votre dossier de travail pour le code PSC** 
+	```bash
+	git clone https://github.com/IloneM/psc.git PATH-TO-WDIR
+	```
 
-Le message suivant devrait apparaître:
-> Unpacking objects: 100% (*un nombre*/*un nombre*), done.
+	**En remplaçant PATH-TO-WDIR par le chemin d'accès à votre dossier de travail pour le code PSC** 
 
-Si tel n'est pas le cas, cela peut-être dû à un problème de proxy:
-Si vous êtes à l'X:
-	1. Vérifier que le proxy est bien configuré en regardant par exemple si [](https://google.com) est accessible
-	2. Si le proxy est bien configuré, essayer de taper dans un terminal:
-```bash
-git config --global http.proxy http://kuzh.polytechnique.fr:8080
-```
-Si vous n'êtes pas à l'X:
-	1. Vérifier que le proxy est bien désactivé en regardant par exemple si [](https://google.com) est accessible
-	2. Si le proxy est bien configuré, essayer de taper dans un terminal:
-```bash
-git config --global --unset http.proxy
-```
+	Le message suivant devrait apparaître:
+	> Unpacking objects: 100% (*un nombre*/*un nombre*), done.
 
-**Si aucune de ces solutions ne marche, me contacter svp.** 
+	Si tel n'est pas le cas, cela peut-être dû à un problème de proxy:
+	Si vous êtes à l'X:
+		1. Vérifier que le proxy est bien configuré en regardant par exemple si [](https://google.com) est accessible
+		2. Si le proxy est bien configuré, essayer de taper dans un terminal:
+
+			```bash
+			git config --global http.proxy http://kuzh.polytechnique.fr:8080
+			```
+
+	Si vous n'êtes pas à l'X:
+		1. Vérifier que le proxy est bien désactivé en regardant par exemple si [](https://google.com) est accessible
+		2. Si le proxy est bien configuré, essayer de taper dans un terminal:
+
+			```bash
+			git config --global --unset http.proxy
+			```
+
+	**Si aucune de ces solutions ne marche, me contacter svp.** 
 
 5. Enfin, toujours dans un terminal taper:
-```bash
-git config --global credential.helper cache
-```
+
+	```bash
+	git config --global credential.helper cache
+	```
 
 #### Instructions d'utilisations
 
@@ -53,20 +58,24 @@ git config --global credential.helper cache
 
 1.  Se rendre dans le dossier de travail via la commande [cd](http://linuxcommand.org/lc3_man_pages/cdh.html)
 2.  Taper dans un terminal:
-```bash
-git pull
-```
-Un des messages suivants devrait apparaître:
-*	> Already up-to-date.
-Ce qui signifie qu'aucun changement n'a été apporté au code
-*	> Unpacking objects: 100% (*n*/*n*), done.
-	> From https://github.com/IloneM/psc
-	>	*hash code*..*another hash code*  master     -> origin/master
-	> Updating *hash code*..*another hash code*
 
-Ce qui signifie que les modification du code ont bien été téléchargées
+	```bash
+	git pull
+	```
 
-Si des difficultés sont rencontrées, se reporter à la fin de la section *Instructions d'initialisation*
+	Un des messages suivants devrait apparaître:
+	*	> Already up-to-date.
+
+		Ce qui signifie qu'aucun changement n'a été apporté au code
+
+	*	> Unpacking objects: 100% (*n*/*n*), done.
+		> From https://github.com/IloneM/psc
+		>	*hash code*..*another hash code*  master     -> origin/master
+		> Updating *hash code*..*another hash code*
+
+		Ce qui signifie que les modification du code ont bien été téléchargées
+
+	Si des difficultés sont rencontrées, se reporter à la fin de la section *Instructions d'initialisation*
 
 ##### Envoyer ses propres modifications (push)
 
@@ -74,23 +83,26 @@ Si des difficultés sont rencontrées, se reporter à la fin de la section *Inst
 
 1.  Se rendre dans le dossier de travail via la commande [cd](http://linuxcommand.org/lc3_man_pages/cdh.html)
 2.	Taper dans un terminal:
-```bash
-git add .
-git commit -a -m "COMMIT-MSG"
-git push
-```
-**Où COMMIT-MSG est un court message décrivant les modifications apportées** 
 
-La première fois, git devrait demander un mot de passe et éventuellement un nom d'utilisateur. Dans les deux cas donner ceux utilisés pour le compte github.
-3. Si tout se passe bien le message suivant devrait apparaître:
-> To https://github.com/IloneM/psc.git
->   *hash code*..*another hash code*  master -> master
+	```bash
+	git add .
+	git commit -a -m "COMMIT-MSG"
+	git push
+	```
 
-Si tel n'est pas le cas:
-* Soit vos identifiants sont erronés auquel cas réessayer
-* Soit vous ne vous êtes pas déclarés comme contributeurs, auquel cas je vous invite à m'envoyer vos ids par email comme mentionné en début de section
-* Soit le proxy est mal configuré, auquel cas relire la fin de la section *Instructions d'initialisation*
-* **Une fois toutes ces possibilités écartées et si le problème persiste, me contacter** 
+	**Où COMMIT-MSG est un court message décrivant les modifications apportées** 
+
+	La première fois, git devrait demander un mot de passe et éventuellement un nom d'utilisateur. Dans les deux cas donner ceux utilisés pour le compte github.
+
+3.	Si tout se passe bien le message suivant devrait apparaître:
+	> To https://github.com/IloneM/psc.git
+	>   *hash code*..*another hash code*  master -> master
+
+	Si tel n'est pas le cas:
+	* Soit vos identifiants sont erronés auquel cas réessayer
+	* Soit vous ne vous êtes pas déclarés comme contributeurs, auquel cas je vous invite à m'envoyer vos ids par email comme mentionné en début de section
+	* Soit le proxy est mal configuré, auquel cas relire la fin de la section *Instructions d'initialisation*
+	* **Une fois toutes ces possibilités écartées et si le problème persiste, me contacter** 
 
 ### Instructions pour Windows
 
