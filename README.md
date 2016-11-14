@@ -13,9 +13,7 @@
 git config --global user.name "YOUR-NAME"
 git config --global user.email "YOUR-EMAIL-ADDRESS"
 ```
-
 **En remplaçant YOUR-NAME et YOUR-EMAIL-ADRESS par ceux utilisés pour github (Cf 1.)** 
-
 4. Toujours dans un terminal taper:
 ```bash
 git clone https://github.com/IloneM/psc.git PATH-TO-WDIR
