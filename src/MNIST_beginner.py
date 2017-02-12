@@ -47,4 +47,17 @@ for i in range(1000):
 
 correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+print("pourcenatge de vecteurs de controle labellés correctement")
 print(sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
+
+#avec le systeme de vote
+#il faudrait avoir la base stockée comme des images et non plus des vecteurs
+
+vote_correct_prediction = tf.equal(tf.argmax(np.sum(y, axis = 1)), tf.argmax(y_,1))
+vote_accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+print("pourcenatge d'extraits musicaux de controle labellés correctement")
+print(sess.run(accuracy, feed_dict={x: mnist.test.images2, y_: mnist.test.labels2}))
+
+
