@@ -35,7 +35,7 @@ def next_batch(features, labels, batch_size):
 
 
 
-#import tensorflow
+#import tensorfl
 import tensorflow as tf
 
 
