@@ -1,11 +1,20 @@
 import numpy as np
 
+n = 100 #size of the vectors (a modifier)
+
+
+
 #import data base
-train_examples = np.random.rand(10000,100)
+train_examples = np.random.rand(10000,n)
 train_labels = np.random.rand(10000,88)
 
-control_examples = np.random.rand(1000,100)
+control_examples = np.random.rand(1000,n)
 control_labels = np.random.rand(1000,88)
+
+control_examples2 = np.random.rand(1000,10,n)
+control_labels2 = np.random.rand(1000,1,88)
+
+data_size = np.shape(control_labels)[0]
 
 print(np.shape(train_examples))
 
@@ -29,13 +38,15 @@ def next_batch(features, labels, batch_size):
 #import tensorflow
 import tensorflow as tf
 
-n = 100 #size of the vectors (a modifier)
+
 
 #emplacements variables
 x = tf.placeholder(tf.float32, [None, n])
 
 W = tf.Variable(tf.zeros([n, 88]))
 b = tf.Variable(tf.zeros([88]))
+
+control_predictions = tf.Variable(tf.zeros([n]))
 
 y = tf.nn.softmax(tf.matmul(x, W) + b)
 
@@ -57,14 +68,18 @@ for i in range(1000):
 correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
+vote = tf.argmax(tf.reduce_sum(y, 1),1)
+
 print("pourcenatge de vecteurs de controle labellés correctement")
-print(sess.run(accuracy, feed_dict={x: train_examples, y_: train_labels}))
+print(sess.run(accuracy, feed_dict={x: control_examples, y_: control_labels}))
 
 #avec le systeme de vote
 #il faudrait avoir la base stockée comme des images et non plus des vecteurs
 
-vote_correct_prediction = tf.equal(tf.argmax(tf.reduce_sum(y, 1),1), tf.argmax(y_,1))
-vote_accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
 
 print("pourcenatge d'extraits musicaux de controle labellés correctement")
-print(sess.run(accuracy, feed_dict={x: control_examples, y_: control_labels}))
+
+for i in range(data_size):
+    control_predictions[i] = sess.run(vote,feed_dict={x: control_examples2[i], y: control_labels2[i]})
+print(tf.reduce_mean(tf.cast(tf.equal(control_predictions, tf.argmax(control_labels2, 1)))))
