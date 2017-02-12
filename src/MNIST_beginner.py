@@ -12,7 +12,9 @@ import numpy as np
 def next_batch(features, labels, size):
     batch_features, batch_labels = np.zeros(size)
     for i in range(size):
-        x = np.floor(np.random * size)
+        x = np.floor(np.random * size) #pour moi ce n'est pas size qu'il faut mettre ici.
+        #la variable aléatoire doit parcourir l'ensemble de la base de données donc à la place de size il faudrait mettre
+        #le nombre d'exemples
         batch_features[i] = features[x]
         batch_labels[i] = labels[x]
     return batch_features, batch_labels
