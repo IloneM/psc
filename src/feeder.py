@@ -32,8 +32,6 @@ class Feeder:
         self.labels = self.labels[permut]
 
         self.examplemode = True
-        self.exampleit = 0
-        self.testit = 0
 
     def getbatch(self, batchfeatures=None, batchlabels=None, batchsize=None):
         if batchsize is None:
@@ -41,18 +39,14 @@ class Feeder:
         if batchsize is None:
             raise ValueError("You must provide a valid batchsize.")
         if self.examplemode:
-            if self.exampleit + batchsize > self.nbexamples:
+            if batchsize > self.nbexamples:
                 raise IndexError
-            beg = self.exampleit
-            self.exampleit += batchsize
-            end = self.exampleit
+            choice = np.random.choice(self.nbexamples, batchsize, False)
         else:
-            if self.testit + batchsize > self.nbtests:
+            if batchsize > self.nbtests:
                 raise IndexError
-            beg = self.nbexamples + self.testit
-            self.testit += batchsize
-            end = self.nbexamples + self.testit
-        batchfeatures, batchlabels = (self.features[beg:end], self.labels[beg:end])
+            choice = np.random.choice(np.arrange(self.nbexamples, self.nbsamples), batchsize, False)
+        batchfeatures, batchlabels = (self.features[choice], self.labels[choice])
         return (batchfeatures, batchlabels)
 
     def switchmode(self):
@@ -63,16 +57,10 @@ class Feeder:
 
     def __next__(self):
         if self.examplemode:
-            if self.exampleit >= self.nbexamples:
-                raise StopIteration
-            it = self.exampleit
-            self.exampleit += 1
+            choice = np.random.randint(self.nbexamples)
         else:
-            if self.testit >= self.nbtests:
-                raise StopIteration
-            it = self.nbexamples + self.testit
-            self.testit += 1
-        return (self.features[it], self.labels[it])
+            choice = np.random.randint(self.nbexamples, self.nbsamples)
+        return (self.features[choice], self.labels[choice])
 
     def __iter__(self):
         return self
