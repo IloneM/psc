@@ -69,38 +69,36 @@ cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=
 
 train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
 
+
+
 init = tf.initialize_all_variables()
 
 sess = tf.Session()
-sess.run(init)
 
-for i in range(exfeeder.nbexamples // exfeeder.batchsize):
-#batch_xs, batch_ys = next_batch(train_examples, train_labels)
-    print("batch %d/%d" % (i+1, exfeeder.nbexamples // exfeeder.batchsize))
 
-    batch_xs, batch_ys = next_batch()
-    sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
-batch_xs, batch_ys = next_batch(batchsize = exfeeder.nbexamples % exfeeder.batchsize)
-sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+def getWb(tours):
+    sess.run(init)
 
-correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    for i in range(tours*exfeeder.nbexamples // exfeeder.batchsize):
+        #il n'y pas de raison pour que le nombre d'itérations soit ca (Raph)
+        #batch_xs, batch_ys = next_batch(train_examples, train_labels)
+        print("batch %d/%d" % (i+1, exfeeder.nbexamples // exfeeder.batchsize))
 
-###vote = tf.argmax(tf.reduce_sum(y, 1),1)
+        batch_xs, batch_ys = next_batch()
+        sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
 
-exfeeder.switchmode()
-control_examples, control_labels = next_batch(batchsize = exfeeder.nbtests)
-
-print("pourcentage de vecteurs de controle labellés correctement")
-print(sess.run(accuracy, feed_dict={x: control_examples, y_: control_labels}))
-
-#avec le systeme de vote
-#il faudrait avoir la base stockée comme des images et non plus des vecteurs
+    return W,b,n,nblabels
 
 
 
-###print("pourcentage d'extraits musicaux de controle labellés correctement")
-###
-###for i in range(data_size):
-###    control_predictions[i] = sess.run(vote,feed_dict={x: control_examples2[i], y: control_labels2[i]})
-###print(tf.reduce_mean(tf.cast(tf.equal(control_predictions, tf.argmax(control_labels2, 1)))))
+
+
+#correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+#accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+#exfeeder.switchmode()
+#control_examples, control_labels = next_batch(batchsize = exfeeder.nbtests)#ce batch est il choisi aléatoirement ou est ce que il prend tout la base de controle ?
+
+#print("pourcentage de vecteurs de controle labellés correctement")
+#print(sess.run(accuracy, feed_dict={x: control_examples, y_: control_labels}))
+
