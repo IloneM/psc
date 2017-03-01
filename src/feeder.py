@@ -14,18 +14,56 @@ class Feeder:
 
         print('loading features')
         self.features = np.loadtxt(featurespath)
-        if 'featuremutation' in opts:
-            tmpres = [None] * self.features.shape[0]
-            ressize = 0
-            for i in range(self.features.shape[0]):
-                tmpres[i] = opts['featuremutation'](self.features[i])
-                ressize += tmpres[i].shape[0]
-
-            self.features = opts['featuremutation'](self.features)
         print('loading labels')
         self.labels = np.loadtxt(labelspath)
+
+        assert self.features.shape[0] == self.labels.shape[0]
+
+        if 'featuremutation' in opts:
+            print('processing features')
+            tmpfeaturessize = self.features.shape[0]
+            tmpfeatures = [None] * tmpfeaturessize
+            featuressizeslist = [0] * tmpfeaturessize
+            for i in range(self.features.shape[0]):
+                tmpfeatures[i] = opts['featuremutation'](self.features[i])
+                featuressizeslist[i] = tmpfeatures[i].shape[0]
+            
+            featuressize = sum(featuressizeslist)
+            if featuressize > tmpfeaturessize:
+                if len(tmpfeatures[0].shape) == 1:
+                    self.features = np.zeros((featuressize,))
+                else:
+                    self.features = np.zeros((featuressize, tmpfeatures[0].shape[0]))
+
+                featuressizeit = 0
+                for i in range(tmpfeaturessize):
+                    beg = featuressizeit
+                    featuressizeit += featuressizeslist[i]
+                    end = featuressizeit
+                    self.features[beg:end] = tmpfeatures[i]
+            else:
+                self.features = np.array(tmpfeatures)
+
         if 'labelmutation' in opts:
-            self.labels = opts['labelmutation'](self.labels)
+            #here the parameters passed to labelmutation must be modified every time while a standard isn't found/fixed
+            firstres = opts['labelmutation'](self.labels[0], 1)
+
+            assert firstres.size == firstres.shape[0]
+
+            tmplabels = np.zeros((self.labels.shape[0], firstres.size))
+            if featuressize > tmpfeaturessize:
+                featuressizeit = 0
+                for i in range(self.labels.shape[0]):
+                    beg = featuressizeit
+                    featuressizeit += featuressizeslist[i]
+                    end = featuressizeit
+                    #here the parameters passed to labelmutation must be modified every time while a standard isn't found/fixed
+                    tmplabels[beg:end] = opts['labelmutation'](self.labels[i], featuressizeslist[i])
+            else:
+                for i in range(self.labels.shape[0]):
+                    #here the parameters passed to labelmutation must be modified every time while a standard isn't found/fixed
+                    tmplabels[i] = opts['labelmutation'](self.labels[i], 1)
+                self.labels = np.array(tmplabels)
 
         assert self.features.shape[0] == self.labels.shape[0]
 

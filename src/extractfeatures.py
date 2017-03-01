@@ -87,9 +87,11 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
     
     #for feeder
     featuremutation = lambda y, sr: lrft.melspectrogram(y, sr).T
-    def labelmutation(audiodat):
-        labelvect = np.zeros(shape=(audiodat.shape[0], FeaturesExtractor.nblabels))
-        labelvect[:, pitch] = np.ones(audiodat.shape[0])
+
+    @staticmethod
+    def labelmutation(pitch, nbsamples):
+        labelvect = np.zeros(shape=(nbsamples, ExtractMonoAudioFiles.nblabels))
+        labelvect[:, pitch] = np.ones(nbsamples)
 
 
     def __init__(self, inpath=None):
