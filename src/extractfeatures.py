@@ -13,37 +13,25 @@ def absolutepromt(prompt="Enter y/n?",choices=["Y","y","n","N"],yeschoices=['Y',
         print(error)
 
 class FeaturesExtractor:
-    #static vars to be manually set
-    ##the natural byterate of the examples here but we can consider modifying it
-    sr = 44100
-    nblabels = 88
-    batchsize = 1000
-    #featurefunc = lrft.melspectrogram
-    featurefunc = lambda y, sr: lrft.mfcc(y, sr, n_mfcc=1)
-    workingpath = '../simple-wdir'
-
-    def __init__(self, inpath=None, featurefunc=None, outpath=None):
-        if inpath is not None:
-            self.workingpath = inpath
-        if featurefunc is not None:
-            self.featurefunc = featurefunc
+    def __init__(self, inpath, computedatafunc, extractmetadatafunc, outpath=None):
+        self.inpath = inpath
+        self.computedatafunc = computedatafunc
+        self.extractmetadatafunc = extractmetadatafunc
         self.outpath = outpath
 
-    def __call__(self, inpath=None, featurefunc=None, outpath=None):
+    def __call__(self, inpath=None, computedatafunc=None, extractmetadatafunc=None, outpath=None):
         if inpath is None:
-            inpath = self.workingpath
-        if featurefunc is None:
-            featurefunc = self.featurefunc
+            inpath = self.inpath
+        if computedatafunc is None:
+            computedatafunc = self.computedatafunc
+        if extractmetadatafunc is None:
+            extractmetadatafunc = self.extractmetadatafunc
         if outpath is None:
             outpath = self.outpath
-        FeaturesExtractor.extract(inpath, featurefunc, outpath)
+        FeaturesExtractor.extract(inpath, computedatafunc, extractmetadatafunc, outpath)
 
     @staticmethod
-    def extract(inpath=None, featurefunc=None, outpath=None):
-        if inpath is None:
-            inpath = FeaturesExtractor.workingpath
-        if featurefunc is None:
-            featurefunc = FeaturesExtractor.featurefunc
+    def extract(inpath, computedatafunc, extractmetadatafunc, outpath=None):
         if outpath is None:
             outpath = inpath
 
@@ -68,26 +56,12 @@ class FeaturesExtractor:
             raise ValueError('you must provide a least one file.')
 
         loopit = 1
-        for smd in FeaturesExtractor.__extractsamplesmetadata(inpath, files):
-            FeaturesExtractor.__storedata(outdatapaths,
-                                          FeaturesExtractor.__computefeatureddata(inpath, featurefunc, smd))
+        for smd in extractmetadatafunc(inpath, files):
+            FeaturesExtractor.__storedata(outdatapaths, computedatafunc(inpath, smd))
 
             if loopit in [1, nbfiles] or not loopit % 100:
                 print('loading file %d/%d' % (loopit, nbfiles))
             loopit += 1
-
-    @staticmethod
-    def __computefeatureddata(path, featurefunc, samplemetadata):
-        meta, pitch = samplemetadata
-
-        audiodat = lrco.load(join(path, meta[0]), sr=FeaturesExtractor.sr,
-                             offset=meta[1], duration=meta[2])
-        audiodat = featurefunc(*audiodat).T
-
-        pitchvect = np.zeros(shape=(audiodat.shape[0], FeaturesExtractor.nblabels))
-        pitchvect[:, pitch] = np.ones(audiodat.shape[0])
-
-        return (audiodat, pitchvect)
 
     @staticmethod
     def __storedata(outpaths, data):
@@ -101,9 +75,40 @@ class FeaturesExtractor:
     def getdatapaths(outpath):
         return (join(outpath, 'features.dat'), join(outpath, 'labels.dat'))
 
+class ExtractMonoAudioFiles(FeaturesExtractor):
+    #static vars to be manually set
+    ##the natural byterate of the examples here but we can consider modifying it
+    sr = 44100
+    nblabels = 88
+    batchsize = 1000
+    #featurefunc = lambda y, sr: lrft.mfcc(y, sr, n_mfcc=1).T
+    featurefunc = lambda x: x
+    inpath = '../simple-wdir'
+    
+    #for feeder
+    featuremutation = lambda y, sr: lrft.melspectrogram(y, sr).T
+
     @staticmethod
-    def __extractsamplesmetadata(path, filelist):
+    def labelmutation(pitch, nbsamples):
+        labelvect = np.zeros(shape=(nbsamples, ExtractMonoAudioFiles.nblabels))
+        labelvect[:, pitch] = np.ones(nbsamples)
+
+
+    def __init__(self, inpath=None):
+        if inpath is None:
+            self.inpath = ExtractMonoAudioFiles.inpath
+        else:
+            self.inpath = inpath
+#        if featurefunc is None:
+#            self.featurefunc = ExtractMonoAudioFiles.featurefunc
+#        else:
+#            self.featurefunc = featurefunc
+        super().__init__(self.inpath, ExtractMonoAudioFiles.computefeatureddata, ExtractMonoAudioFiles.extractsamplesmetadata)
+
+    @staticmethod
+    def extractsamplesmetadata(path, filelist):
         samplesmetadata = []
+
         for f in filelist:
             with open(join(path, f), 'r') as fs:
                 #get the the onset and offset plus midi pitch
@@ -113,8 +118,21 @@ class FeaturesExtractor:
             samplesmetadata.append(((f[:-3] + 'wav', onset, offset-onset), int(midipitch - 21)))
         return samplesmetadata
 
+    @staticmethod
+    def computefeatureddata(path, samplemetadata):
+        meta, pitch = samplemetadata
+
+        audiodat = lrco.load(join(path, meta[0]), sr= ExtractMonoAudioFiles.sr,
+                             offset=meta[1], duration=meta[2])
+        audiodat = ExtractMonoAudioFiles.featurefunc(*audiodat)
+
+        pitchvect = np.array([pitch] * audiodat.shape[0])
+
+        return (audiodat, pitchvect)
+
 if __name__ == '__main__':
     if len(sys.argv) > 2:
-        FeaturesExtractor.extract(sys.argv[1])
+        ex = ExtractMonoAudioFiles(sys.argv[1])
     else:
-        FeaturesExtractor.extract()
+        ex = ExtractMonoAudioFiles()
+    ex()
