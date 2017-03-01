@@ -45,6 +45,7 @@ class Feeder:
                 self.features = np.array(tmpfeatures)
 
         if 'labelmutation' in opts:
+            print('processing labels')
             #here the parameters passed to labelmutation must be modified every time while a standard isn't found/fixed
             firstres = opts['labelmutation'](self.labels[0], 1)
 
