@@ -12,59 +12,28 @@ print("exiting feeder")
 n = exfeeder.features.shape[1] #size of the vectors (a modifier)
 nblabels = exfeeder.labels.shape[1]
 
-##train_examples = np.random.rand(10000,n)
-##train_labels = np.random.rand(10000,nblabels)
-##
-##control_examples = np.random.rand(1000,n)
-##control_labels = np.random.rand(1000,nblabels)
-##
-##control_examples2 = np.random.rand(1000,10,n)
-##control_labels2 = np.random.rand(1000,1,nblabels)
 
-##data_size = np.shape(control_labels)[0]
 data_size = exfeeder.nbtests
 
-##print(np.shape(train_examples))
 
-#define batching
 next_batch = exfeeder
-#train_examples = np.zeros((n, *ex.featuresshape))
-#train_labels = np.zeros((n, nblabels))
 
-##### batch_xs = np.zeros((n, *ex.featuresshape))
-##### batch_ys = np.zeros((n, nblabels))
-##### 
-##### control_examples = np.zeros((ex.nbtests, *ex.featuresshape))
-##### control_labels = np.zeros((ex.nbtests, nblabels))
+#définition des placeholders
 
-##def next_batch(features, labels, batch_size):
-##  data_size = np.shape(features)[0]
-##  feature_size = np.shape(features)[1]
-##  label_size = np.shape(labels)[1]
-##  batch_features = np.zeros((batch_size, feature_size))
-##  batch_labels = np.zeros((batch_size, label_size))
-##  for i in range(batch_size):
-##    x = np.floor(np.random.random(1)[0] * data_size) #pour moi ce n'est pas size qu'il faut mettre ici.
-##    #la variable aléatoire doit parcourir l'ensemble de la base de données donc à la place de size il faudrait mettre
-##    #le nombre d'exemples
-##    batch_features[i] = features[x]
-##    batch_labels[i] = labels[x]
-##    return batch_features, batch_labels
-
-#import tensorfl
-
-#emplacements variables
+#features
 x = tf.placeholder(tf.float32, [None, n])
 
+#paramètres (poids)
 W = tf.Variable(tf.zeros([n, nblabels]))
 b = tf.Variable(tf.zeros([nblabels]))
 
-control_predictions = tf.Variable(tf.zeros([n]))
-
+#approximation de y (vecteur stochastique de proba)
 y = tf.nn.softmax(tf.matmul(x, W) + b)
 
+#le label des features x
 y_ = tf.placeholder(tf.float32, [None, nblabels])
 
+#fonction de cout (permet de
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
 
 train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
@@ -81,24 +50,14 @@ def getWb(tours):
 
     for i in range(tours*exfeeder.nbexamples // exfeeder.batchsize):
         #il n'y pas de raison pour que le nombre d'itérations soit ca (Raph)
-        #batch_xs, batch_ys = next_batch(train_examples, train_labels)
+        #avec tours = 1 on passe en moyenne une fois par exemple
+
         print("batch %d/%d" % (i+1, exfeeder.nbexamples // exfeeder.batchsize))
 
+        #on effectue une étape de l'entrainement (c'est a dire un gradient descent sur tout le batch)
         batch_xs, batch_ys = next_batch()
         sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
 
+    #enfin on récupère les paramètres qui ont été optimisés pour répondre au mieux à la régression linéaire
+    #ces paramètres sont récupérés dans la classe controle
     return W,b,n,nblabels
-
-
-
-
-
-#correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
-#accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-#exfeeder.switchmode()
-#control_examples, control_labels = next_batch(batchsize = exfeeder.nbtests)#ce batch est il choisi aléatoirement ou est ce que il prend tout la base de controle ?
-
-#print("pourcentage de vecteurs de controle labellés correctement")
-#print(sess.run(accuracy, feed_dict={x: control_examples, y_: control_labels}))
-
