@@ -3,8 +3,9 @@ import numpy as np
 class Feeder:
     def __init__(self, featurespath, labelspath=None, opts={}):
 
-        opts.update({'examplesratio': 0.95, })
-        self.opts = opts
+        defopts = {'examplesratio': 0.95, }
+        defopts.update(opts)
+        self.opts = defopts
 
         if labelspath is None:
             from extractfeatures import FeaturesExtractor as fe
@@ -83,9 +84,9 @@ class Feeder:
         self.nbtests = self.nbsamples - self.nbexamples
 
         #random permutation of the samples in way to have an otpimal learning
-        permut = np.random.permutation(self.nbsamples)
-        self.features = self.features[permut]
-        self.labels = self.labels[permut]
+        #permut = np.random.permutation(self.nbsamples)
+        #self.features = self.features[permut]
+        #self.labels = self.labels[permut]
 
         self.examplemode = True
 
@@ -148,7 +149,8 @@ class AudioFeeder(Feeder):
         self.originslen += nbsamples
         self.origins.extend([(oldlen, self.originslen-1)] * nbsamples)
 
-        pitch = int(pitchandorig[0])
-        labelvect = np.zeros(shape=(nbsamples, ExtractMonoAudioFiles.nblabels))
-        labelvect[:, pitch] = np.ones(nbsamples)
+        return int(pitchandorig[0])
+        #pitch = int(pitchandorig[0])
+        #labelvect = np.zeros(shape=(nbsamples, ExtractMonoAudioFiles.nblabels))
+        #labelvect[:, pitch] = np.ones(nbsamples)
 
