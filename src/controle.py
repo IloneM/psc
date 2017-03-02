@@ -15,7 +15,7 @@ y = tf.nn.softmax(tf.matmul(x, W) + b)
 
 y_ = tf.placeholder(tf.float32, [None, nblabels])
 
-vote = tf.argmax(tf.reduce_sum(y, 1), 0)*
+vote = tf.argmax(tf.reduce_sum(y, 1), 0)
 
 init = tf.initialize_all_variables()
 
@@ -28,6 +28,10 @@ print("pourcentage d'extraits musicaux de controle labellés correctement")
 # dans cette partie on va mettre en place le système de vote. Il faudrait alors avoir#c'est une liste dont les éléments sont un couple (spectrogram, label) correspondant à un extrait musical entier
 # la base de donnée sous une forme pratique
 # c'est une liste dont les éléments sont un couple (spectrogram, label) correspondant à un extrait musical entier
+
+af = feeder.AudioFeeder(ef.ExtractMonoAudioFiles.inpath, opts={'contextmode': True})
+af.switchmode()
+
 s = 0.0
 total = 0.0
 for e in af:
