@@ -5,7 +5,7 @@ class Feeder:
 
         defopts = {'examplesratio': 0.95, }
         defopts.update(opts)
-        self.opts = defopts
+        opts = self.opts = defopts
 
         if labelspath is None:
             from extractfeatures import FeaturesExtractor as fe
@@ -50,10 +50,13 @@ class Feeder:
             #here the parameters passed to labelmutation must be modified every time while a standard isn't found/fixed
             firstres = opts['labelmutation'](self.labels[0], 1)
 
-            assert firstres.size == firstres.shape[0]
+            assert type(firstres) in np.ScalarType or firstres.size == firstres.shape[1]
 
-            tmplabels = np.zeros((self.labels.shape[0], firstres.size))
-            if featuressize > tmpfeaturessize:
+            if type(firstres) in np.ScalarType:
+                tmplabels = np.zeros((self.labels.shape[0], 1))
+            else:
+                tmplabels = np.zeros((self.labels.shape[0], firstres.size))
+            if 'featuremutation' in opts and featuressize > tmpfeaturessize:
                 featuressizeit = 0
                 for i in range(self.labels.shape[0]):
                     beg = featuressizeit
@@ -127,13 +130,15 @@ class AudioFeeder(Feeder):
     def __init__(self, featurespath, labelspath=None, opts={}):
         import extractfeatures as ef
         #audiopts = {'featuremutation': ef.ExtractMonoAudioFiles.featuremutation, 'labelmutation': ef.ExtractMonoAudioFiles.labelmutation, 'contextmode': False}
-        audiopts = {'featuremutation': ef.ExtractMonoAudioFiles.featuremutation, 'labelmutation': self.labelmutation, 'contextmode': False}
+        #audiopts = {'featuremutation': ef.ExtractMonoAudioFiles.featuremutation, 'labelmutation': self.labelmutation, 'contextmode': False}
+        audiopts = {'labelmutation': self.labelmutation, 'contextmode': False}
         audiopts.update(opts)
+        opts = audiopts
 
         self.origins = []
         self.originslen = 0
 
-        super().__init__(featurespath, labelspath, audiopts)
+        super().__init__(featurespath, labelspath, opts)
 
     def __next__(self):
         if self.examplemode:
@@ -150,6 +155,7 @@ class AudioFeeder(Feeder):
         self.origins.extend([(oldlen, self.originslen-1)] * nbsamples)
 
         return int(pitchandorig[0])
+        #return [int(pitchandorig[0])] * nbsamples
         #pitch = int(pitchandorig[0])
         #labelvect = np.zeros(shape=(nbsamples, ExtractMonoAudioFiles.nblabels))
         #labelvect[:, pitch] = np.ones(nbsamples)

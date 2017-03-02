@@ -92,7 +92,8 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
     featuremutation = lambda *args: args
 
     @staticmethod
-    def labelmutation(pitch, nbsamples):
+    def labelmutation(pitchandorig, nbsamples):
+        pitch = int(pitchandorig[0])
         labelvect = np.zeros(shape=(nbsamples, ExtractMonoAudioFiles.nblabels))
         labelvect[:, pitch] = np.ones(nbsamples)
         return labelvect
@@ -132,13 +133,13 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
 
         #assert audiodat.shape[0] == audiodat.size
 
-        pitchvect = np.array([pitch, sampleorig] * audiodat.shape[0], dtype=int)
+        pitchvect = np.array([[pitch, sampleorig]] * audiodat.shape[0], dtype=int)
 
         return (audiodat, pitchvect)
 
-if __name__ == '__main__':
-    if len(sys.argv) > 2:
-        ex = ExtractMonoAudioFiles(sys.argv[1])
-    else:
-        ex = ExtractMonoAudioFiles()
-    ex()
+#if __name__ == '__main__':
+#    if len(sys.argv) > 2:
+#        ex = ExtractMonoAudioFiles(sys.argv[1])
+#    else:
+#        ex = ExtractMonoAudioFiles()
+#    ex()
