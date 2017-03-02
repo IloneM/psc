@@ -2,7 +2,7 @@ import numpy as np
 from extractfeatures import FeaturesExtractor as fe
 import tensorflow as tf
 import feeder
-import MNIST_beginner
+import training_en_reg_lin
 import numpy as np
 
 W, b, n, nblabels = MNIST_beginner.getWb(1)
@@ -30,10 +30,12 @@ print("pourcentage d'extraits musicaux de controle labellés correctement")
 # c'est une liste dont les éléments sont un couple (spectrogram, label) correspondant à un extrait musical entier
 s = 0.0
 total = 0.0
-for i in range(data_size):
+for e in af:
     # get current_x
-    # get current_y
-    current_label = np.argmax()
+    # get current_label
+    current_x = e[0]	
+    current_label = e[1]
+
     if (sess.run(vote, feed_dict={x: current_x}) == current_label):
         s = s + 1
     total += 1
