@@ -57,7 +57,7 @@ class FeaturesExtractor:
 
         loopit = 1
         for smd in extractmetadatafunc(inpath, files):
-            FeaturesExtractor.__storedata(outdatapaths, computedatafunc(inpath, smd))
+            FeaturesExtractor.__storedata(outdatapaths, computedatafunc(inpath, smd, loopit))
 
             if loopit in [1, nbfiles] or not loopit % 100:
                 print('loading file %d/%d' % (loopit, nbfiles))
@@ -82,11 +82,14 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
     nblabels = 88
     batchsize = 1000
     #featurefunc = lambda y, sr: lrft.mfcc(y, sr, n_mfcc=1).T
-    featurefunc = lambda x: x
+    #featurefunc = lambda *args: args
+    featurefunc = lambda y, sr: lrft.melspectrogram(y, sr).T
     inpath = '../simple-wdir'
     
     #for feeder
-    featuremutation = lambda y, sr: lrft.melspectrogram(y, sr).T
+    #featuremutation = lambda y: lrft.melspectrogram(y, ExtractMonoAudioFiles.sr).T
+    #featuremutation = lambda y, sr: lrft.melspectrogram(y, sr).T
+    featuremutation = lambda *args: args
 
     @staticmethod
     def labelmutation(pitch, nbsamples):
@@ -118,15 +121,18 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
             samplesmetadata.append(((f[:-3] + 'wav', onset, offset-onset), int(midipitch - 21)))
         return samplesmetadata
 
+    #here sampleorig is just a trick in way to be able to refound the origin of sample. A prettiest way of doing this must be found
     @staticmethod
-    def computefeatureddata(path, samplemetadata):
+    def computefeatureddata(path, samplemetadata, sampleorig):
         meta, pitch = samplemetadata
 
         audiodat = lrco.load(join(path, meta[0]), sr= ExtractMonoAudioFiles.sr,
                              offset=meta[1], duration=meta[2])
         audiodat = ExtractMonoAudioFiles.featurefunc(*audiodat)
 
-        pitchvect = np.array([pitch] * audiodat.shape[0])
+        #assert audiodat.shape[0] == audiodat.size
+
+        pitchvect = np.array([pitch, sampleorig] * audiodat.shape[0], dtype=int)
 
         return (audiodat, pitchvect)
 

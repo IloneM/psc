@@ -125,4 +125,30 @@ class Feeder:
 class AudioFeeder(Feeder):
     def __init__(self, featurespath, labelspath=None, opts={}):
         import extractfeatures as ef
-        opts.update({'featuremutation': ef.ExtractMonoAudioFiles.featuremutation, 'labelmutation': ef.ExtractMonoAudioFiles.labelmutation})
+        #audiopts = {'featuremutation': ef.ExtractMonoAudioFiles.featuremutation, 'labelmutation': ef.ExtractMonoAudioFiles.labelmutation, 'contextmode': False}
+        audiopts = {'featuremutation': ef.ExtractMonoAudioFiles.featuremutation, 'labelmutation': self.labelmutation, 'contextmode': False}
+        audiopts.update(opts)
+
+        self.origins = []
+        self.originslen = 0
+
+        super().__init__(featurespath, labelspath, audiopts)
+
+    def __next__(self):
+        if self.examplemode:
+            choice = np.random.randint(self.nbexamples)
+        else:
+            choice = np.random.randint(self.nbexamples, self.nbsamples)
+        if self.opts['contextmode']:
+            return (self.features[self.origins[choice][0]], self.labels[self.origins[choice][1]])
+        return (self.features[choice], self.labels[choice])
+
+    def labelmutation(self, pitchandorig, nbsamples):
+        oldlen = self.originslen
+        self.originslen += nbsamples
+        self.origins.extend([(oldlen, self.originslen-1)] * nbsamples)
+
+        pitch = int(pitchandorig[0])
+        labelvect = np.zeros(shape=(nbsamples, ExtractMonoAudioFiles.nblabels))
+        labelvect[:, pitch] = np.ones(nbsamples)
+

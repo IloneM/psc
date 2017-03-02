@@ -1,5 +1,6 @@
 import numpy as np
-from extractfeatures import FeaturesExtractor as fe
+#from extractfeatures import FeaturesExtractor as fe
+from extractfeatures import ExtractMonoAudioFiles as emaf
 import tensorflow as tf
 import feeder
 
@@ -7,7 +8,7 @@ import feeder
 #import data base
 #ex = ef.Examples(workingpath, featureext, nblabels, batchsize=n)
 print("entering feeder")
-exfeeder = feeder.Feeder(fe.workingpath, batchsize=fe.batchsize)
+exfeeder = feeder.Feeder(emaf.inpath)#, batchsize=emaf.batchsize)
 print("exiting feeder")
 n = exfeeder.features.shape[1] #size of the vectors (a modifier)
 nblabels = exfeeder.labels.shape[1]
