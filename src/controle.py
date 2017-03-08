@@ -1,5 +1,6 @@
 import numpy as np
 from extractfeatures import FeaturesExtractor as fe
+from extractfeatures import ExtractMonoAudioFiles as emaf
 import tensorflow as tf
 import feeder
 import training_en_reg_lin
@@ -29,7 +30,9 @@ print("pourcentage d'extraits musicaux de controle labellés correctement")
 # la base de donnée sous une forme pratique
 # c'est une liste dont les éléments sont un couple (spectrogram, label) correspondant à un extrait musical entier
 
-af = feeder.AudioFeeder(ef.ExtractMonoAudioFiles.inpath, opts={'contextmode': True})
+#af = feeder.AudioFeeder(emaf.inpath, opts={'contextmode': True})
+af = training_en_reg_lin.exfeeder
+af.opts['contextmode'] = True
 af.switchmode()
 
 s = 0.0
@@ -38,7 +41,7 @@ for e in af:
     # get current_x
     # get current_label
     current_x = e[0]	
-    current_label = e[1]
+    current_label = np.argmax(e[1])
 
     if (sess.run(vote, feed_dict={x: current_x}) == current_label):
         s = s + 1

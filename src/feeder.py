@@ -1,4 +1,5 @@
 import numpy as np
+from extractfeatures import ExtractMonoAudioFiles as emaf
 
 class Feeder:
     def __init__(self, featurespath, labelspath=None, opts={}):
@@ -136,7 +137,8 @@ class AudioFeeder(Feeder):
         opts = audiopts
 
         self.origins = []
-        self.originslen = 0
+        self.originsit = 1
+        self.originspos = 0
 
         super().__init__(featurespath, labelspath, opts)
 
@@ -150,13 +152,20 @@ class AudioFeeder(Feeder):
         return (self.features[choice], self.labels[choice])
 
     def labelmutation(self, pitchandorig, nbsamples):
-        oldlen = self.originslen
+        oldlen = self.originsit
         self.originslen += nbsamples
-        self.origins.extend([(oldlen, self.originslen-1)] * nbsamples)
+        if not self.originsit == int(pitchandorig[1]):
+            self.origins.extend([(self.originspos, self.originsit-1)] * (self.originsit- self.originspos))
+            self.originspos = self.originsit
+        self.originsit += 1
+        if self.originsit == self.labels.shape[0]:
+            self.origins.extend([(self.originspos, self.originsit-1)] * (self.originsit- self.originspos))
+            self.originspos = self.originsit
 
-        return int(pitchandorig[0])
+        #return int(pitchandorig[0])
         #return [int(pitchandorig[0])] * nbsamples
-        #pitch = int(pitchandorig[0])
-        #labelvect = np.zeros(shape=(nbsamples, ExtractMonoAudioFiles.nblabels))
-        #labelvect[:, pitch] = np.ones(nbsamples)
+        pitch = int(pitchandorig[0])
+        labelvect = np.zeros(shape=(nbsamples, emaf.nblabels))
+        labelvect[:, pitch] = np.ones(nbsamples)
+        return labelvect
 

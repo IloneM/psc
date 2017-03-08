@@ -1,0 +1,36 @@
+#phpmyadmin:
+#   image: corbinu/docker-phpmyadmin
+#   ports :
+#    - "8080:80"
+#   environment:
+#    - MYSQL_USERNAME=root
+#    - MYSQL_PASSWORD=password
+#   links:
+#    - database:mysql
+phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    ports :
+     - "8080:80"
+    environment:
+#     - PMA_ARBITRARY=1
+     - PMA_HOST=localhost
+#     - PMA_PORT="3306"
+    restart: always
+#    external_links:
+#     - pscdb:db
+#    ports:
+#     - 8080:80
+#    volumes:
+#     - /sessions
+database:
+    image: mariadb:latest
+    container_name: pscdb
+    ports:
+     - "3306:3306"  
+    environment:
+     - MYSQL_ROOT_PASSWORD="cBy1BfHTkPfXUH6ItoYIRBLtgQuvIi4qGtCISjXr"
+     - MYSQL_DATABASE="psc"
+     - MYSQL_USER="dmeet"
+     - MYSQL_PASSWORD="psmusic2016"
+

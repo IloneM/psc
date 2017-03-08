@@ -8,7 +8,7 @@ import feeder
 #import data base
 #ex = ef.Examples(workingpath, featureext, nblabels, batchsize=n)
 print("entering feeder")
-exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'labelmutation': emaf.labelmutation})#, batchsize=emaf.batchsize)
+exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
 print("exiting feeder")
 n = exfeeder.features.shape[1] #size of the vectors (a modifier)
 nblabels = exfeeder.labels.shape[1]
@@ -49,11 +49,11 @@ sess = tf.Session()
 def getWb(tours):
     sess.run(init)
 
-    for i in range(tours*exfeeder.nbexamples // exfeeder.batchsize):
+    for i in range(tours* exfeeder.nbsamples // emaf.batchsize):
         #il n'y pas de raison pour que le nombre d'itérations soit ca (Raph)
         #avec tours = 1 on passe en moyenne une fois par exemple
 
-        print("batch %d/%d" % (i+1, exfeeder.nbexamples // exfeeder.batchsize))
+        print("batch %d/%d" % (i+1, exfeeder.nbsamples // emaf.batchsize))
 
         #on effectue une étape de l'entrainement (c'est a dire un gradient descent sur tout le batch)
         batch_xs, batch_ys = next_batch()
