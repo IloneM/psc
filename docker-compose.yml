@@ -1,36 +1,54 @@
+##phpmyadmin:
+##   image: corbinu/docker-phpmyadmin
+##   ports :
+##    - "8080:80"
+##   environment:
+##    - MYSQL_USERNAME=root
+##    - MYSQL_PASSWORD=password
+##   links:
+##    - database:mysql
 #phpmyadmin:
-#   image: corbinu/docker-phpmyadmin
-#   ports :
-#    - "8080:80"
-#   environment:
-#    - MYSQL_USERNAME=root
-#    - MYSQL_PASSWORD=password
-#   links:
-#    - database:mysql
-phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
-    ports :
-     - "8080:80"
-    environment:
-#     - PMA_ARBITRARY=1
-     - PMA_HOST=localhost
-#     - PMA_PORT="3306"
-    restart: always
-#    external_links:
-#     - pscdb:db
+#    image: phpmyadmin/phpmyadmin
+#    container_name: phpmyadmin
+#    ports :
+#     - "8080:80"
+#    environment:
+##     - PMA_ARBITRARY=1
+#     - PMA_HOST=localhost
+##     - PMA_PORT="3306"
+#    restart: always
+##    external_links:
+##     - pscdb:db
+##    ports:
+##     - 8080:80
+##    volumes:
+##     - /sessions
+#database:
+#    image: mariadb
+#    container_name: pscdb
 #    ports:
-#     - 8080:80
-#    volumes:
-#     - /sessions
-database:
-    image: mariadb:latest
-    container_name: pscdb
+#     - "3306:3306"  
+#    environment:
+#     - MYSQL_ROOT_PASSWORD="cBy1BfHTkPfXUH6ItoYIRBLtgQuvIi4qGtCISjXr"
+##     - MYSQL_DATABASE="psc"
+##     - MYSQL_USER="dmeet"
+##     - MYSQL_PASSWORD="psmusic2016"
+phpmyadmin:
+    image: 'phpmyadmin/phpmyadmin'
+    restart: always
     ports:
-     - "3306:3306"  
+       - '8080:80'
+    links:
+        - mysql:mysql
     environment:
-     - MYSQL_ROOT_PASSWORD="cBy1BfHTkPfXUH6ItoYIRBLtgQuvIi4qGtCISjXr"
-     - MYSQL_DATABASE="psc"
-     - MYSQL_USER="dmeet"
-     - MYSQL_PASSWORD="psmusic2016"
-
+        MYSQL_USERNAME: root
+        MYSQL_ROOT_PASSWORD: cBy1BfHTkPfXUH6ItoYIRBLtgQuvIi4qGtCISjXr
+        PMA_HOST: mysql
+mysql:
+    image: 'mariadb'
+    ports:
+        - '3306:3306'
+    volumes:
+        - ./db-data:/var/lib/mysql
+    environment:
+        - MYSQL_ROOT_PASSWORD=cBy1BfHTkPfXUH6ItoYIRBLtgQuvIi4qGtCISjXr

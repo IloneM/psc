@@ -57,7 +57,7 @@ class FeaturesExtractor:
 
         loopit = 1
         for smd in extractmetadatafunc(inpath, files):
-            FeaturesExtractor.__storedata(outdatapaths, computedatafunc(inpath, smd, loopit))
+            FeaturesExtractor.__storedata(outdatapaths, computedatafunc(inpath, smd))
 
             if loopit in [1, nbfiles] or not loopit % 100:
                 print('loading file %d/%d' % (loopit, nbfiles))
@@ -82,21 +82,19 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
     nblabels = 88
     batchsize = 1000
     #featurefunc = lambda y, sr: lrft.mfcc(y, sr, n_mfcc=1).T
-    #featurefunc = lambda *args: args
+    #featurefunc = lambda *x: x
     featurefunc = lambda y, sr: lrft.melspectrogram(y, sr).T
     inpath = '../simple-wdir'
     
     #for feeder
-    #featuremutation = lambda y: lrft.melspectrogram(y, ExtractMonoAudioFiles.sr).T
-    #featuremutation = lambda y, sr: lrft.melspectrogram(y, sr).T
-    featuremutation = lambda *args: args
+    featuremutation = lambda y, sr: lrft.melspectrogram(y, sr).T
 
     @staticmethod
-    def labelmutation(pitchandorig, nbsamples):
-        pitch = int(pitchandorig[0])
+    def labelmutation(pitch, nbsamples):
         labelvect = np.zeros(shape=(nbsamples, ExtractMonoAudioFiles.nblabels))
-        labelvect[:, pitch] = np.ones(nbsamples)
-        return labelvect
+        print(pitch)
+        labelvect[:, int(pitch)] = np.ones(nbsamples)
+
 
     def __init__(self, inpath=None):
         if inpath is None:
@@ -122,24 +120,22 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
             samplesmetadata.append(((f[:-3] + 'wav', onset, offset-onset), int(midipitch - 21)))
         return samplesmetadata
 
-    #here sampleorig is just a trick in way to be able to refound the origin of sample. A prettiest way of doing this must be found
     @staticmethod
-    def computefeatureddata(path, samplemetadata, sampleorig):
+    def computefeatureddata(path, samplemetadata):
         meta, pitch = samplemetadata
 
         audiodat = lrco.load(join(path, meta[0]), sr= ExtractMonoAudioFiles.sr,
                              offset=meta[1], duration=meta[2])
         audiodat = ExtractMonoAudioFiles.featurefunc(*audiodat)
 
-        #assert audiodat.shape[0] == audiodat.size
+        pitchvect = np.array([pitch] * audiodat.shape[0])
 
-        pitchvect = np.array([[pitch, sampleorig]] * audiodat.shape[0], dtype=int)
-
+        #return (audiodat, pitch)
         return (audiodat, pitchvect)
 
-#if __name__ == '__main__':
-#    if len(sys.argv) > 2:
-#        ex = ExtractMonoAudioFiles(sys.argv[1])
-#    else:
-#        ex = ExtractMonoAudioFiles()
-#    ex()
+if __name__ == '__main__':
+    if len(sys.argv) > 2:
+        ex = ExtractMonoAudioFiles(sys.argv[1])
+    else:
+        ex = ExtractMonoAudioFiles()
+    ex()

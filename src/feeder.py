@@ -1,12 +1,10 @@
 import numpy as np
-from extractfeatures import ExtractMonoAudioFiles as emaf
 
 class Feeder:
     def __init__(self, featurespath, labelspath=None, opts={}):
 
-        defopts = {'examplesratio': 0.95, }
-        defopts.update(opts)
-        opts = self.opts = defopts
+        opts.update({'examplesratio': 0.95, })
+        self.opts = opts
 
         if labelspath is None:
             from extractfeatures import FeaturesExtractor as fe
@@ -28,6 +26,7 @@ class Feeder:
             featuressizeslist = [0] * tmpfeaturessize
             for i in range(self.features.shape[0]):
                 tmpfeatures[i] = opts['featuremutation'](self.features[i])
+                print(tmpfeatures[i])
                 featuressizeslist[i] = tmpfeatures[i].shape[0]
             
             featuressize = sum(featuressizeslist)
@@ -51,13 +50,11 @@ class Feeder:
             #here the parameters passed to labelmutation must be modified every time while a standard isn't found/fixed
             firstres = opts['labelmutation'](self.labels[0], 1)
 
-            assert type(firstres) in np.ScalarType or firstres.size == firstres.shape[1]
+            print(firstres)
+            assert firstres.size == firstres.shape[0]
 
-            if type(firstres) in np.ScalarType:
-                tmplabels = np.zeros((self.labels.shape[0], 1))
-            else:
-                tmplabels = np.zeros((self.labels.shape[0], firstres.size))
-            if 'featuremutation' in opts and featuressize > tmpfeaturessize:
+            tmplabels = np.zeros((self.labels.shape[0], firstres.size))
+            if featuressize > tmpfeaturessize:
                 featuressizeit = 0
                 for i in range(self.labels.shape[0]):
                     beg = featuressizeit
@@ -88,9 +85,9 @@ class Feeder:
         self.nbtests = self.nbsamples - self.nbexamples
 
         #random permutation of the samples in way to have an otpimal learning
-        #permut = np.random.permutation(self.nbsamples)
-        #self.features = self.features[permut]
-        #self.labels = self.labels[permut]
+        permut = np.random.permutation(self.nbsamples)
+        self.features = self.features[permut]
+        self.labels = self.labels[permut]
 
         self.examplemode = True
 
@@ -130,42 +127,7 @@ class Feeder:
 class AudioFeeder(Feeder):
     def __init__(self, featurespath, labelspath=None, opts={}):
         import extractfeatures as ef
-        #audiopts = {'featuremutation': ef.ExtractMonoAudioFiles.featuremutation, 'labelmutation': ef.ExtractMonoAudioFiles.labelmutation, 'contextmode': False}
-        #audiopts = {'featuremutation': ef.ExtractMonoAudioFiles.featuremutation, 'labelmutation': self.labelmutation, 'contextmode': False}
-        audiopts = {'labelmutation': self.labelmutation, 'contextmode': False}
-        audiopts.update(opts)
-        opts = audiopts
-
-        self.origins = []
-        self.originsit = 1
-        self.originspos = 0
-
+        #opts.update({'featuremutation': ef.ExtractMonoAudioFiles.featuremutation, 'labelmutation': ef.ExtractMonoAudioFiles.labelmutation})
+        #opts.update({'featuremutation': ef.ExtractMonoAudioFiles.featurefunc, 'labelmutation': ef.ExtractMonoAudioFiles.labelmutation})
+        opts.update({'labelmutation': ef.ExtractMonoAudioFiles.labelmutation})
         super().__init__(featurespath, labelspath, opts)
-
-    def __next__(self):
-        if self.examplemode:
-            choice = np.random.randint(self.nbexamples)
-        else:
-            choice = np.random.randint(self.nbexamples, self.nbsamples)
-        if self.opts['contextmode']:
-            return (self.features[self.origins[choice][0]], self.labels[self.origins[choice][1]])
-        return (self.features[choice], self.labels[choice])
-
-    def labelmutation(self, pitchandorig, nbsamples):
-        oldlen = self.originsit
-        self.originslen += nbsamples
-        if not self.originsit == int(pitchandorig[1]):
-            self.origins.extend([(self.originspos, self.originsit-1)] * (self.originsit- self.originspos))
-            self.originspos = self.originsit
-        self.originsit += 1
-        if self.originsit == self.labels.shape[0]:
-            self.origins.extend([(self.originspos, self.originsit-1)] * (self.originsit- self.originspos))
-            self.originspos = self.originsit
-
-        #return int(pitchandorig[0])
-        #return [int(pitchandorig[0])] * nbsamples
-        pitch = int(pitchandorig[0])
-        labelvect = np.zeros(shape=(nbsamples, emaf.nblabels))
-        labelvect[:, pitch] = np.ones(nbsamples)
-        return labelvect
-

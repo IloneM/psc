@@ -2,10 +2,10 @@ import numpy as np
 from extractfeatures import FeaturesExtractor as fe
 import tensorflow as tf
 import feeder
-import MNIST_beginner
+import training_en_reg_lin
 import numpy as np
 
-W, b, n, nblabels = MNIST_beginner.getWb(1)
+W, b, n, nblabels = training_en_reg_lin.getWb(1)
 
 print(W)
 print(b)
