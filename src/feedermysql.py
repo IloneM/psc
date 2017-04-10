@@ -4,9 +4,8 @@ from mysqlstuffs import Database
 
 class Feeder:
     def __init__(self, opts={}):
-
-        self.opts = {'examplesratio': 0.95, 'dbname': emaf.outdb}
-        self.opts.update(opts)
+        opts.update({'examplesratio': 0.95, 'dbname': emaf.outdb})
+        self.opts = opts
 
         self.db = Database(self.opts['dbname'])
 
@@ -68,11 +67,11 @@ class Feeder:
     def __iter__(self):
         return self
 
-    @abstractmethod
+#    @abstractmethod
     def __countsamples(self):
         pass
 
-    @abstractmethod
+#    @abstractmethod
     def __choiceintosamples(self, choice):
         pass
 
@@ -82,17 +81,19 @@ class AudioFeeder(Feeder):
 #        import extractfeatures as ef
         #opts.update({'featuremutation': ef.ExtractMonoAudioFiles.featuremutation, 'labelmutation': ef.ExtractMonoAudioFiles.labelmutation})
         #opts.update({'featuremutation': ef.ExtractMonoAudioFiles.featurefunc, 'labelmutation': ef.ExtractMonoAudioFiles.labelmutation})
-        opts.update({'labelmutation': ef.ExtractMonoAudioFiles.labelmutation})
+        #opts.update({'labelmutation': ef.ExtractMonoAudioFiles.labelmutation})
 
         self.nbfeatures = None
+        self.nblabels = emaf.nblabels
 
-        super().__init__(featurespath, labelspath, opts)
+        super().__init__(opts)
 
     def __countsamples(self):
         return self.db.count(emaf.tablecontext)
 
     def __choiceintosamples(self, choice):
         nbsamples = self.batchsize
+        nblabels = self.nblabels
         tmpres = self.db.get(choice)
 
         if self.nbfeatures is None:
@@ -100,7 +101,7 @@ class AudioFeeder(Feeder):
         nbfeatures = self.nbfeatures
 
         features = np.zeros(shape=(nbsamples, nbfeatures))
-        labels = np.zeros(shape=(nbsamples, emaf.nblabels))
+        labels = np.zeros(shape=(nbsamples, nblabels))
 
         for i in range(nbsamples):
             line = list(tmpres[i])

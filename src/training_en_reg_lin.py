@@ -2,7 +2,7 @@ import numpy as np
 #from extractfeatures import FeaturesExtractor as fe
 from extractfeatures import ExtractMonoAudioFiles as emaf
 import tensorflow as tf
-import feeder
+import feedermysql as feeder
 
 #featureext = ef.lrft.melspectrogram
 #import data base
@@ -10,12 +10,10 @@ import feeder
 print("entering feeder")
 exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
 print("exiting feeder")
-n = exfeeder.features.shape[1] #size of the vectors (a modifier)
-nblabels = exfeeder.labels.shape[1]
-
+n = exfeeder.nbfeatures #size of the vectors (a modifier)
+nblabels = exfeeder.nblabels
 
 data_size = exfeeder.nbtests
-
 
 next_batch = exfeeder
 

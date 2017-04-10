@@ -2,6 +2,8 @@ phpmyadmin:
     image: 'phpmyadmin/phpmyadmin'
     container_name: pma
     restart: always
+    ports:
+        - '8080:80'
     links:
         - mysql:mysql
     environment:
