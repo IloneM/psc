@@ -24,8 +24,18 @@ next_batch = exfeeder
 x = tf.placeholder(tf.float32, [None, n])
 
 #paramètres (poids)
-W = tf.Variable(tf.zeros([n, nblabels]))
-b = tf.Variable(tf.zeros([nblabels]))
+def weight_variable(shape):
+    initial = tf.truncated_normal(shape, stddev=0.1)
+    return tf.Variable(initial)
+
+def bias_variable(shape):
+    initial = tf.constant(0.1, shape=shape)
+    return tf.Variable(initial)
+
+W = weight_variable([n, nblabels])
+b = bias_variable([nblabels])
+
+
 
 #approximation de y (vecteur stochastique de proba)
 y = tf.nn.softmax(tf.matmul(x, W) + b)
