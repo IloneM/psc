@@ -4,6 +4,8 @@ from mysqlstuffs import Database
 #from abc import ABCMeta
 from abc import *
 
+#TODO: translate ids by rand permut
+
 class Feeder(metaclass=ABCMeta):
     def __init__(self, opts={}):
         opts.update({'examplesratio': 0.95, 'dbname': emaf.outdb})
@@ -28,7 +30,7 @@ class Feeder(metaclass=ABCMeta):
             self.batchsize = None
         self.nbsamples = self.countsamples()
         #self.nbsamples = self.db.count(emaf.tablecontext)
-        self.nbexamples = int(np.ceil(self.nbsamples * opts['examplesratio']))
+        self.nbexamples = self.countexamples()
         self.nbtests = self.nbsamples - self.nbexamples
 
         self.examplemode = True
@@ -78,6 +80,8 @@ class Feeder(metaclass=ABCMeta):
     def choiceintosamples(self, choice):
         pass
 
+    def countexamples(self):
+        return int(np.ceil(self.nbsamples * self.opts['examplesratio']))
 
 class AudioFeeder(Feeder):
     def __init__(self, featurespath, labelspath=None, opts={}):
@@ -123,3 +127,27 @@ class AudioFeeder(Feeder):
                 nbreturned = 0
             print("%d/%d returned" % (nbreturned, choice.size))
         return (features, labels)
+
+class AudioFeederContext(AudioFeeder):
+    def countexamples(self):
+        approxres = super().countexamples()
+        itempersample = self.itempersample = self.db.count(emaf.tablecontext, 'sample_id')
+        totitems = 0
+        itsample = 0
+        while totitems < approxres:
+            totitems += itempersample[itsample][0]
+            itsample += 1
+
+        self.examplefirstitem = itsample
+        return totitems
+
+    def getbatch(self, batchfeatures=None, batchlabels=None, batchsize=None):
+        if self.examplemode:
+            return super().getbatch(batchfeatures, batchlabels, batchsize)
+        else:
+            res = []
+            nbgroupedsamples = len(self.itempersample)
+            for sampleit in range(self.examplefirstitem, nbgroupedsamples):
+                ids = np.array([idt[0] for idt in self.db.get(emaf.tablecontext, sampleit, ['id'], 'sample_id')])
+                res.append(self.choiceintosamples(ids))
+            return res

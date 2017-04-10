@@ -32,15 +32,17 @@ print("pourcentage d'extraits musicaux de controle labellés correctement")
 
 #af = feeder.AudioFeeder(emaf.inpath, opts={'contextmode': True})
 af = training_en_reg_lin.exfeeder
-af.opts['contextmode'] = True
+#af.opts['contextmode'] = True
 af.switchmode()
 
-s = 0.0
-total = 0.0
-for e in af:
+samples = af.getbatch()
+
+s = 0
+total = 0
+for e in samples:
     # get current_x
     # get current_label
-    current_x = e[0]	
+    current_x = e[0]
     current_label = np.argmax(e[1])
 
     if (sess.run(vote, feed_dict={x: current_x}) == current_label):

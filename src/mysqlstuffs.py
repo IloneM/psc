@@ -46,13 +46,18 @@ class Database:
         except Error as error:
             print(error)
 
-    def count(self, table):
+    def count(self, table, groupby=None):
         query = "SELECT COUNT(*) FROM `%s`"
+        if groupby is not None:
+            query += ' GROUP BY `%s`' % groupby
         try:
             cursor = self.__get_cursor()
             cursor.execute(query % (table,))
 
-            return cursor.fetchone()[0]
+            if groupby is not None:
+                return cursor.fetchall()
+            else:
+                return cursor.fetchone()[0]
 
         except Error as error:
             print(error)
@@ -118,9 +123,16 @@ class Database:
         except Error as error:
             print(error)
 
-    def get(self, table, fieldsid=None, cols=None):
+    def get(self, table, fieldsid=None, cols=None, idfield='id'):
         if fieldsid is not None and not isinstance(fieldsid, collections.Iterable):
             fieldsid = [fieldsid]
+
+#        if conds is not None and not isinstance(conds, collections.Iterable):
+#            conds = [conds]
+#        for cond in conds:
+#            assert isinstance(cond, dict)
+#
+#            condstr = ','.join(['`'+str(k)+"`=\'"+str(v)+"\'" for k,v in iteritems(cond)])
 
         if cols is None:
             cols = '*'
@@ -135,7 +147,7 @@ class Database:
             if fieldsid is None or len(fieldsid) <= 0:
                 cursor.execute("SELECT %s FROM %s WHERE 1" % (cols, table))
             else:
-                cursor.execute("SELECT %s FROM %s WHERE id IN (%s)" % (cols, '`'+table+'`', ', '.join([str(i) for i in fieldsid])))
+                cursor.execute("SELECT %s FROM %s WHERE %s IN (%s)" % (cols, '`'+table+'`', idfield, ', '.join([str(i) for i in fieldsid])))
 
             return cursor.fetchall()
 

@@ -7,9 +7,10 @@ import feedermysql as feeder
 #featureext = ef.lrft.melspectrogram
 #import data base
 #ex = ef.Examples(workingpath, featureext, nblabels, batchsize=n)
-print("entering feeder")
-exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
-print("exiting feeder")
+#print("entering feeder")
+exfeeder = feeder.AudioFeederContext(emaf.inpath, opts={'batchsize': emaf.batchsize})
+#exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
+#print("exiting feeder")
 n = exfeeder.nbfeatures #size of the vectors (a modifier)
 nblabels = exfeeder.nblabels
 
