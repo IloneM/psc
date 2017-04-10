@@ -45,7 +45,7 @@ class Feeder(metaclass=ABCMeta):
         else:
             if batchsize > self.nbtests:
                 raise IndexError
-            choice = np.random.choice(np.arrange(self.nbexamples, self.nbsamples), batchsize, False)
+            choice = np.random.choice(np.arange(self.nbexamples, self.nbsamples), batchsize, False)
         #batchfeatures, batchlabels = (self.features[choice], self.labels[choice])
         return self.choiceintosamples(choice)
 #        batchfeatures,batchlabels = self.choiceintosamples(choice)
