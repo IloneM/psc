@@ -24,6 +24,7 @@ class ExtractMonoAudioFiles:
     #featurefunc = lambda *x: x
     #featurefunc = lambda y, sr: lrft.melspectrogram(y, sr).T
     featurefunc = lrft.melspectrogram
+    tablecontext = 'melspectrogram'
     inpath = '../simple-wdir'
     outdb = 'psc'
     
@@ -46,7 +47,7 @@ class ExtractMonoAudioFiles:
             self.outdb = ExtractMonoAudioFiles.outdb
         else:
             self.outdb = outdb
-        self.tablecontext = self.featurefunc.__name__
+        #self.tablecontext = self.featurefunc.__name__
 #        if featurefunc is None:
 #            self.featurefunc = ExtractMonoAudioFiles.featurefunc
 #        else:

@@ -1,8 +1,10 @@
 import numpy as np
 from extractfeaturesmysql import ExtractMonoAudioFiles as emaf
 from mysqlstuffs import Database
+#from abc import ABCMeta
+from abc import *
 
-class Feeder:
+class Feeder(metaclass=ABCMeta):
     def __init__(self, opts={}):
         opts.update({'examplesratio': 0.95, 'dbname': emaf.outdb})
         self.opts = opts
@@ -24,7 +26,7 @@ class Feeder:
             self.batchsize = opts['batchsize']
         else:
             self.batchsize = None
-        self.nbsamples = self.__countsamples()
+        self.nbsamples = self.countsamples()
         #self.nbsamples = self.db.count(emaf.tablecontext)
         self.nbexamples = int(np.ceil(self.nbsamples * opts['examplesratio']))
         self.nbtests = self.nbsamples - self.nbexamples
@@ -45,8 +47,8 @@ class Feeder:
                 raise IndexError
             choice = np.random.choice(np.arrange(self.nbexamples, self.nbsamples), batchsize, False)
         #batchfeatures, batchlabels = (self.features[choice], self.labels[choice])
-        return self.__choiceintosamples(choice)
-#        batchfeatures,batchlabels = self.__choiceintosamples(choice)
+        return self.choiceintosamples(choice)
+#        batchfeatures,batchlabels = self.choiceintosamples(choice)
         #tmpres = self.db.get(choice)
 #        batchfeatures, batchlabels = (self.db.get , self.labels[choice])
 #        return (batchfeatures, batchlabels)
@@ -58,21 +60,22 @@ class Feeder:
         return self.getbatch(batchfeatures, batchlabels, batchsize)
 
     def __next__(self):
-        if self.examplemode:
-            choice = np.random.randint(self.nbexamples)
-        else:
-            choice = np.random.randint(self.nbexamples, self.nbsamples)
-        return (self.features[choice], self.labels[choice])
+        return self.getbatch(batchsize=1)
+#        if self.examplemode:
+#            choice = np.random.randint(self.nbexamples)
+#        else:
+#            choice = np.random.randint(self.nbexamples, self.nbsamples)
+#        return (self.features[choice], self.labels[choice])
 
     def __iter__(self):
         return self
 
-#    @abstractmethod
-    def __countsamples(self):
+    @abstractmethod
+    def countsamples(self):
         pass
 
-#    @abstractmethod
-    def __choiceintosamples(self, choice):
+    @abstractmethod
+    def choiceintosamples(self, choice):
         pass
 
 
@@ -88,13 +91,16 @@ class AudioFeeder(Feeder):
 
         super().__init__(opts)
 
-    def __countsamples(self):
+        #nbfeatures definition
+        self.__next__()
+
+    def countsamples(self):
         return self.db.count(emaf.tablecontext)
 
-    def __choiceintosamples(self, choice):
-        nbsamples = self.batchsize
+    def choiceintosamples(self, choice):
+        nbsamples = choice.size
         nblabels = self.nblabels
-        tmpres = self.db.get(choice)
+        tmpres = self.db.get(emaf.tablecontext, choice)
 
         if self.nbfeatures is None:
             self.nbfeatures = len(tmpres[0]) - 3

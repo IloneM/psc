@@ -1,6 +1,7 @@
 import mysql.connector
 from mysql.connector import Error
 from six import iteritems,iterkeys,itervalues
+import collections
 
 class Database:
 
@@ -57,7 +58,7 @@ class Database:
             print(error)
 
     def insert(self, table, datas, getids=False):
-        if not isinstance(datas, list):
+        if not isinstance(datas, collections.Iterable):
             datas = [datas]
 
         query = "INSERT INTO `%s`(%s) VALUES(%s)"
@@ -89,9 +90,9 @@ class Database:
             return idslist
 
     def update(self, table, datas, conds):
-        if not isinstance(datas, list):
+        if not isinstance(datas, collections.Iterable):
             datas = [datas]
-        if not isinstance(conds, list):
+        if not isinstance(conds, collections.Iterable):
             conds = [conds]
 
         assert len(datas) == len(conds)
@@ -118,13 +119,13 @@ class Database:
             print(error)
 
     def get(self, table, fieldsid=None, cols=None):
-        if fieldsid is not None and not isinstance(fieldsid, list):
+        if fieldsid is not None and not isinstance(fieldsid, collections.Iterable):
             fieldsid = [fieldsid]
 
         if cols is None:
             cols = '*'
         else:
-            if not isinstance(cols, list) or isinstance(cols, str):
+            if not isinstance(cols, collections.Iterable) or isinstance(cols, str):
                 cols = [cols]
             cols = '`' + '`, `'.join(cols) + '`'
 
