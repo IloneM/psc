@@ -4,9 +4,11 @@ from six import iteritems,iterkeys,itervalues
 
 class Database:
 
-    dbname = 'psc'
-
-    def __init__(self):
+    def __init__(self, dbname = None):
+        if dbname is None:
+            self.dbname = 'psc'
+        else:
+            self.dbname = dbname
         self.connector = self.connect()
  
     def connect(self):
@@ -31,11 +33,37 @@ class Database:
     def __get_cursor(self):
         return self.__get_connector().cursor()
 
-    def insert(self, table, datas):
+    def istable(self, table):
+        query = "show tables like \'%s\'"
+        try:
+            cursor = self.__get_cursor()
+            cursor.execute(query % (table,))
+
+            return not cursor.fetchone() is None
+            #return len(cursor.fetchall()) > 0
+
+        except Error as error:
+            print(error)
+
+    def count(self, table):
+        query = "SELECT COUNT(*) FROM `%s`"
+        try:
+            cursor = self.__get_cursor()
+            cursor.execute(query % (table,))
+
+            return cursor.fetchone()[0]
+
+        except Error as error:
+            print(error)
+
+    def insert(self, table, datas, getids=False):
         if not isinstance(datas, list):
             datas = [datas]
 
         query = "INSERT INTO `%s`(%s) VALUES(%s)"
+
+        if getids:
+            idslist = []
         
         for data in datas:
             assert isinstance(data, dict)
@@ -48,9 +76,17 @@ class Database:
                 cursor.execute(query % (table, '`' + '`, `'.join(keystrs) + '`', "\'" + "\', \'".join(valstrs) + "\'"))
                 
                 self.__get_connector().commit()
+                
+                if getids:
+                    cursor.execute("SELECT LAST_INSERT_ID()")
+                    tmpret = cursor.fetchone()
+                    idslist.append(None if tmpret is None else tmpret[0])
 
             except Error as error:
                 print(error)
+
+        if getids:
+            return idslist
 
     def update(self, table, datas, conds):
         if not isinstance(datas, list):

@@ -49,11 +49,11 @@ sess = tf.Session()
 def getWb(tours):
     sess.run(init)
 
-    for i in range(tours* exfeeder.nbsamples // emaf.batchsize):
+    for i in range(tours * exfeeder.nbsamples // emaf.batchsize):
         #il n'y pas de raison pour que le nombre d'itérations soit ca (Raph)
         #avec tours = 1 on passe en moyenne une fois par exemple
 
-        print("batch %d/%d" % (i+1, exfeeder.nbsamples // emaf.batchsize))
+        print("batch %d/%d" % (i+1, tours * exfeeder.nbsamples // emaf.batchsize))
 
         #on effectue une étape de l'entrainement (c'est a dire un gradient descent sur tout le batch)
         batch_xs, batch_ys = next_batch()

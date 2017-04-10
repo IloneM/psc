@@ -50,11 +50,14 @@ class Feeder:
             #here the parameters passed to labelmutation must be modified every time while a standard isn't found/fixed
             firstres = opts['labelmutation'](self.labels[0], 1)
 
-            print(firstres)
-            assert firstres.size == firstres.shape[0]
+#            print(firstres)
+#            print(firstres.size)
+#            print(firstres.shape[0])
+#            assert firstres.size == firstres.shape[1]
 
             tmplabels = np.zeros((self.labels.shape[0], firstres.size))
-            if featuressize > tmpfeaturessize:
+            if 'tmpfeaturessize' in locals() and featuressize > tmpfeaturessize:
+            #if 'featuremutation' in opts and featuressize > tmpfeaturessize:
                 featuressizeit = 0
                 for i in range(self.labels.shape[0]):
                     beg = featuressizeit
@@ -103,7 +106,7 @@ class Feeder:
         else:
             if batchsize > self.nbtests:
                 raise IndexError
-            choice = np.random.choice(np.arrange(self.nbexamples, self.nbsamples), batchsize, False)
+            choice = np.random.choice(np.arange(self.nbexamples, self.nbsamples), batchsize, False)
         batchfeatures, batchlabels = (self.features[choice], self.labels[choice])
         return (batchfeatures, batchlabels)
 

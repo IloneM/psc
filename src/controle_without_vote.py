@@ -5,7 +5,8 @@ import feeder
 import training_en_reg_lin
 import numpy as np
 
-W, b, n, nblabels = training_en_reg_lin.getWb(1)
+#W, b, n, nblabels = training_en_reg_lin.getWb(1)
+W, b, n, nblabels = training_en_reg_lin.getWb(20)
 
 print(W)
 print(b)
@@ -33,6 +34,8 @@ sess.run(init)
 
 # get x_control_base (ici il nous faut la base de donnée sous la forme d'une suite de vecteurs (donc une matrice)
 # get y_control_base (ceci est aussi une suite de vecteurs sous la forme donc une matrice)
+training_en_reg_lin.exfeeder.switchmode()
+x_control_base,y_control_base = training_en_reg_lin.exfeeder.getbatch(batchsize=training_en_reg_lin.exfeeder.nbtests)
 
 print(sess.run(accuracy, feed_dict={x: x_control_base, y_: y_control_base}))
 

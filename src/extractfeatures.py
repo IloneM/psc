@@ -92,9 +92,8 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
     @staticmethod
     def labelmutation(pitch, nbsamples):
         labelvect = np.zeros(shape=(nbsamples, ExtractMonoAudioFiles.nblabels))
-        print(pitch)
         labelvect[:, int(pitch)] = np.ones(nbsamples)
-
+        return labelvect
 
     def __init__(self, inpath=None):
         if inpath is None:
