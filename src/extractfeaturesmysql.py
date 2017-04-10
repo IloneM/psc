@@ -129,7 +129,7 @@ class ExtractMonoAudioFiles:
             tmpstruct = {'id': 'INT(11) NOT NULL AUTO_INCREMENT',
                          'label_id': 'INT(11) DEFAULT NULL',
                          'sample_id': 'INT(11) DEFAULT NULL'}
-            if len(features.shape) > 1:
+            if features.ndim > 1:
                 nbfeat = features.shape[1]
             else:
                 nbfeat = 1
@@ -141,7 +141,7 @@ class ExtractMonoAudioFiles:
 
         #fill table
         rowsnb = features.shape[0]
-        if len(features.shape) > 1:
+        if features.ndim > 1:
             colsnb = features.shape[1]
         else:
             colsnb = 1

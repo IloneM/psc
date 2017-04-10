@@ -98,6 +98,8 @@ class AudioFeeder(Feeder):
         return self.db.count(emaf.tablecontext)
 
     def choiceintosamples(self, choice):
+#        assert choice.ndim == 1
+#        assert choice
         nbsamples = choice.size
         nblabels = self.nblabels
         tmpres = self.db.get(emaf.tablecontext, choice)
@@ -109,9 +111,15 @@ class AudioFeeder(Feeder):
         features = np.zeros(shape=(nbsamples, nbfeatures))
         labels = np.zeros(shape=(nbsamples, nblabels))
 
-        for i in range(nbsamples):
-            line = list(tmpres[i])
-            features[i] = line[3:]
-            labels[i, line[1]] = 1.
-
+        try:
+            for i in range(nbsamples):
+                line = list(tmpres[i])
+                features[i] = line[3:]
+                labels[i, line[1]] = 1.
+        except IndexError:
+            if tmpres is not None:
+                nbreturned = len(tmpres)
+            else:
+                nbreturned = 0
+            print("%d/%d returned" % (nbreturned, choice.size))
         return (features, labels)
