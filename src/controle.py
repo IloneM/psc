@@ -43,7 +43,7 @@ for e in samples:
     # get current_x
     # get current_label
     current_x = e[0]
-    current_label = np.argmax(e[1])
+    current_label = np.argmax(e[1][0])
 
     if (sess.run(vote, feed_dict={x: current_x}) == current_label):
         s = s + 1

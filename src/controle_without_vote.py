@@ -6,7 +6,7 @@ import training_en_reg_lin
 import numpy as np
 
 #W, b, n, nblabels = training_en_reg_lin.getWb(1)
-W, b, n, nblabels = training_en_reg_lin.getWb(10)
+W, b, n, nblabels = training_en_reg_lin.getWb(1)
 
 #print(W)
 #print(b)
