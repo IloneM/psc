@@ -46,7 +46,7 @@ y_ = tf.placeholder(tf.float32, [None, nblabels])
 #fonction de cout (permet de
 cross_entropy = tf.reduce_mean(tf.reduce_sum(tf.pow(y-y_,2)))
 
-train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+train_step = tf.train.GradientDescentOptimizer(0.01).minimize(cross_entropy)
 
 
 
@@ -58,7 +58,7 @@ sess = tf.Session()
 def getWb(tours):
     sess.run(init)
     #tours * exfeeder.nbsamples // emaf.batchsize
-    for i in range(10):
+    for i in range(tours * exfeeder.nbsamples // emaf.batchsize):
         #il n'y pas de raison pour que le nombre d'itérations soit ca (Raph)
         #avec tours = 1 on passe en moyenne une fois par exemple
 
@@ -66,13 +66,13 @@ def getWb(tours):
 
         #on effectue une étape de l'entrainement (c'est a dire un gradient descent sur tout le batch)
         batch_xs, batch_ys = next_batch()
-        print(sess.run(y, feed_dict={x: batch_xs, y_: batch_ys}))
-        print(sess.run(cross_entropy, feed_dict={x: batch_xs, y_: batch_ys}))
+        #print(sess.run(y, feed_dict={x: batch_xs, y_: batch_ys}))
+        #print(sess.run(cross_entropy, feed_dict={x: batch_xs, y_: batch_ys}))
         sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
-        print(sess.run(cross_entropy, feed_dict={x: batch_xs, y_: batch_ys}))
+        #print(sess.run(cross_entropy, feed_dict={x: batch_xs, y_: batch_ys}))
 
     #enfin on récupère les paramètres qui ont été optimisés pour répondre au mieux à la régression linéaire
     #ces paramètres sont récupérés dans la classe controle
-    np.savetxt('weights.dat', W.eval())
-    np.savetxt('bias.dat', b.eval())
+    np.savetxt('weights.dat', W.eval(session=sess))
+    np.savetxt('bias.dat', b.eval(session=sess))
     return W,b,n,nblabels
