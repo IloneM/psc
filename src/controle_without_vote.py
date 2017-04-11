@@ -27,7 +27,7 @@ correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 #pour obtenir le pourcentage de réussite sur la simulation
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-init = tf.initialize_all_variables()
+init = tf.global_variables_initializer()
 
 sess = tf.Session()
 sess.run(init)

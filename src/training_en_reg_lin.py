@@ -29,7 +29,7 @@ def weight_variable(shape):
     return tf.Variable(initial)
 
 def bias_variable(shape):
-    initial = tf.constant(0.1, shape=shape)
+    initial = tf.truncated_normal(shape, stddev=0.01)
     return tf.Variable(initial)
 
 W = weight_variable([n, nblabels])
@@ -38,19 +38,19 @@ b = bias_variable([nblabels])
 
 
 #approximation de y (vecteur stochastique de proba)
-y = tf.nn.softmax(tf.matmul(x, W) + b)
+y = tf.nn.softmax(tf.matmul(x, W) + b) #modèle
 
 #le label des features x
 y_ = tf.placeholder(tf.float32, [None, nblabels])
 
 #fonction de cout (permet de
-cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
+cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y)))
 
 train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
 
 
 
-init = tf.initialize_all_variables()
+init = tf.global_variables_initializer()
 
 sess = tf.Session()
 
@@ -66,7 +66,9 @@ def getWb(tours):
 
         #on effectue une étape de l'entrainement (c'est a dire un gradient descent sur tout le batch)
         batch_xs, batch_ys = next_batch()
+        print(sess.run(cross_entropy, feed_dict={x: batch_xs, y_: batch_ys}))
         sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+        print(sess.run(cross_entropy, feed_dict={x: batch_xs, y_: batch_ys}))
 
     #enfin on récupère les paramètres qui ont été optimisés pour répondre au mieux à la régression linéaire
     #ces paramètres sont récupérés dans la classe controle
