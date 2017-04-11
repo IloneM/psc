@@ -44,12 +44,10 @@ class Feeder(metaclass=ABCMeta):
             if batchsize > self.nbexamples:
                 raise IndexError
             choice = np.random.choice(self.nbexamples, batchsize, False)
+            return self.choiceintosamples(choice)
         else:
-            if batchsize > self.nbtests:
-                raise IndexError
-            choice = np.random.choice(np.arange(self.nbexamples, self.nbsamples), batchsize, False)
+            return self.controlprocess(batchsize)
         #batchfeatures, batchlabels = (self.features[choice], self.labels[choice])
-        return self.choiceintosamples(choice)
 #        batchfeatures,batchlabels = self.choiceintosamples(choice)
         #tmpres = self.db.get(choice)
 #        batchfeatures, batchlabels = (self.db.get , self.labels[choice])
@@ -71,6 +69,12 @@ class Feeder(metaclass=ABCMeta):
 
     def __iter__(self):
         return self
+
+    def controlprocess(self, batchsize):
+        if batchsize > self.nbtests:
+            raise IndexError
+        choice = np.random.choice(np.arange(self.nbexamples, self.nbsamples), batchsize, False)
+        return self.choiceintosamples(choice)
 
     @abstractmethod
     def countsamples(self):
@@ -141,13 +145,11 @@ class AudioFeederContext(AudioFeeder):
         self.examplefirstitem = itsample
         return totitems
 
-    def getbatch(self, batchfeatures=None, batchlabels=None, batchsize=None):
-        if self.examplemode:
-            return super().getbatch(batchfeatures, batchlabels, batchsize)
-        else:
-            res = []
-            nbgroupedsamples = len(self.itempersample)
-            for sampleit in range(self.examplefirstitem, nbgroupedsamples):
-                ids = np.array([idt[0] for idt in self.db.get(emaf.tablecontext, sampleit, ['id'], 'sample_id')])
-                res.append(self.choiceintosamples(ids))
-            return res
+    def controlprocess(self, batchsize):
+        res = []
+        nbgroupedsamples = len(self.itempersample)
+        for sampleit in range(self.examplefirstitem, nbgroupedsamples):
+            ids = np.array([idt[0] for idt in self.db.get(emaf.tablecontext, sampleit, ['id'], 'sample_id')])
+            res.append(self.choiceintosamples(ids))
+        return res
+

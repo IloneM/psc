@@ -8,8 +8,8 @@ import feedermysql as feeder
 #import data base
 #ex = ef.Examples(workingpath, featureext, nblabels, batchsize=n)
 #print("entering feeder")
-exfeeder = feeder.AudioFeederContext(emaf.inpath, opts={'batchsize': emaf.batchsize})
-#exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
+#exfeeder = feeder.AudioFeederContext(emaf.inpath, opts={'batchsize': emaf.batchsize})
+exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
 #print("exiting feeder")
 n = exfeeder.nbfeatures #size of the vectors (a modifier)
 nblabels = exfeeder.nblabels
@@ -72,4 +72,6 @@ def getWb(tours):
 
     #enfin on récupère les paramètres qui ont été optimisés pour répondre au mieux à la régression linéaire
     #ces paramètres sont récupérés dans la classe controle
+    np.savetxt('weights.dat', W.eval())
+    np.savetxt('bias.dat', b.eval())
     return W,b,n,nblabels

@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from tkinter import *
 
-exfeeder = feeder.AudioFeederContext(emaf.inpath, opts={'batchsize': emaf.batchsize})
+exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
 
 n = exfeeder.nbfeatures
 
@@ -59,7 +59,6 @@ init = tf.initialize_all_variables()
 
 correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 
-
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 tours = 100
@@ -82,7 +81,7 @@ for i in range(tours * exfeeder.nbsamples // emaf.batchsize):
     print("entropy1  "+ str(ent1))
     print("accuracy1  " + str(accu1))
     accuracy_graph[i] = accu1
-    print (accuracy_graph)
+    print(accuracy_graph)
     sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
     ent2, accu2 = sess.run(cross_entropy, feed_dict={x: batch_xs, y_: batch_ys}), sess.run(accuracy,feed_dict={x: batch_xs, y_: batch_ys})
     print("entropy2  " + str(ent2))
@@ -98,8 +97,9 @@ plt.figure(2)
 plt.plot(time, accuracy_graph)
 plt.show()
 
-training_en_reg_lin.exfeeder.switchmode()
-x_control_base,y_control_base = training_en_reg_lin.exfeeder.getbatch(batchsize=training_en_reg_lin.exfeeder.nbtests)
+#training_en_reg_lin.exfeeder.switchmode()
+exfeeder.switchmode()
+x_control_base,y_control_base = exfeeder.getbatch(batchsize=exfeeder.nbtests)
 
 print(sess.run(accuracy, feed_dict={x: x_control_base, y_: y_control_base}))
 
