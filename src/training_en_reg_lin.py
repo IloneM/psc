@@ -8,8 +8,8 @@ import feedermysql as feeder
 #import data base
 #ex = ef.Examples(workingpath, featureext, nblabels, batchsize=n)
 #print("entering feeder")
-exfeeder = feeder.AudioFeederContext(emaf.inpath, opts={'batchsize': emaf.batchsize})
-#exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
+#exfeeder = feeder.AudioFeederContext(emaf.inpath, opts={'batchsize': emaf.batchsize})
+exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
 #print("exiting feeder")
 n = exfeeder.nbfeatures #size of the vectors (a modifier)
 nblabels = exfeeder.nblabels
@@ -44,7 +44,7 @@ y = tf.nn.softmax(tf.matmul(x, W) + b) #modèle
 y_ = tf.placeholder(tf.float32, [None, nblabels])
 
 #fonction de cout (permet de
-cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y)))
+cross_entropy = tf.reduce_mean(tf.reduce_sum(tf.pow(y-y_,2)))
 
 train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
 
@@ -57,8 +57,8 @@ sess = tf.Session()
 
 def getWb(tours):
     sess.run(init)
-
-    for i in range(tours * exfeeder.nbsamples // emaf.batchsize):
+    #tours * exfeeder.nbsamples // emaf.batchsize
+    for i in range(10):
         #il n'y pas de raison pour que le nombre d'itérations soit ca (Raph)
         #avec tours = 1 on passe en moyenne une fois par exemple
 
@@ -66,6 +66,7 @@ def getWb(tours):
 
         #on effectue une étape de l'entrainement (c'est a dire un gradient descent sur tout le batch)
         batch_xs, batch_ys = next_batch()
+        print(sess.run(y, feed_dict={x: batch_xs, y_: batch_ys}))
         print(sess.run(cross_entropy, feed_dict={x: batch_xs, y_: batch_ys}))
         sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
         print(sess.run(cross_entropy, feed_dict={x: batch_xs, y_: batch_ys}))
