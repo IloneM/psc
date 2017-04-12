@@ -27,9 +27,12 @@ class Database:
             print(e)
 
     def __get_connector(self):
-        if self.connect is not None:
-            return self.connector
-        return self.connect()
+        if self.connector is not None:
+            if not self.connector.is_connected():
+                self.connector.reconnect()
+        else:
+            self.connector = self.connect()
+        return self.connector
 
     def __get_cursor(self):
         return self.__get_connector().cursor()
