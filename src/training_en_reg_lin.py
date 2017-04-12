@@ -58,7 +58,7 @@ sess = tf.Session()
 def getWb(tours):
     sess.run(init)
     #tours * exfeeder.nbsamples // emaf.batchsize
-    for i in range(tours * exfeeder.nbsamples // emaf.batchsize):
+    for i in range(1000):
         #il n'y pas de raison pour que le nombre d'itérations soit ca (Raph)
         #avec tours = 1 on passe en moyenne une fois par exemple
 
