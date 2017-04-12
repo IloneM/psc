@@ -178,13 +178,10 @@ class AudioFeederFullContext(AudioFeederContext):
             except IndexError:
                 print("%d has not all features available. Passing." % (i,))
                 nberrors += 1
-#            except KeyError:
-#                print(batch)
-#                print(i)
-#                print(self.nbaverage)
-#                print(smartchoice[i*self.nbaverage])
-#                print(restoparse[smartchoice[i*self.nbaverage]])
-#                raise KeyError
+            #occurs when we are at the end of table
+            except KeyError:
+                batch = None
+                nberrors += 1
             if batch is not None:
                 features[i-nberrors] = np.mean(batch, 0)
 
