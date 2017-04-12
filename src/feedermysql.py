@@ -13,23 +13,11 @@ class Feeder(metaclass=ABCMeta):
 
         self.db = Database(self.opts['dbname'])
 
-#        if labelspath is None:
-#            from extractfeatures import FeaturesExtractor as fe
-#            featurespath, labelspath = fe.getdatapaths(featurespath)
-#        self.labelspath = labelspath
-#        self.featurespath = featurespath
-
-#        if len(self.features.shape) == 1:
-#            self.features = np.array([[nb] for nb in self.features])
-#        if len(self.labels.shape) == 1:
-#            self.labels = np.array([[nb] for nb in self.labels])
-
         if 'batchsize' in opts:
             self.batchsize = opts['batchsize']
         else:
             self.batchsize = None
         self.nbsamples = self.countsamples()
-        #self.nbsamples = self.db.count(emaf.tablecontext)
         self.nbexamples = self.countexamples()
         self.nbtests = self.nbsamples - self.nbexamples
 
@@ -47,11 +35,6 @@ class Feeder(metaclass=ABCMeta):
             return self.choiceintosamples(choice)
         else:
             return self.controlprocess(batchsize)
-        #batchfeatures, batchlabels = (self.features[choice], self.labels[choice])
-#        batchfeatures,batchlabels = self.choiceintosamples(choice)
-        #tmpres = self.db.get(choice)
-#        batchfeatures, batchlabels = (self.db.get , self.labels[choice])
-#        return (batchfeatures, batchlabels)
 
     def switchmode(self):
         self.examplemode = not self.examplemode
@@ -61,11 +44,6 @@ class Feeder(metaclass=ABCMeta):
 
     def __next__(self):
         return self.getbatch(batchsize=1)
-#        if self.examplemode:
-#            choice = np.random.randint(self.nbexamples)
-#        else:
-#            choice = np.random.randint(self.nbexamples, self.nbsamples)
-#        return (self.features[choice], self.labels[choice])
 
     def __iter__(self):
         return self
@@ -89,11 +67,6 @@ class Feeder(metaclass=ABCMeta):
 
 class AudioFeeder(Feeder):
     def __init__(self, featurespath, labelspath=None, opts={}):
-#        import extractfeatures as ef
-        #opts.update({'featuremutation': ef.ExtractMonoAudioFiles.featuremutation, 'labelmutation': ef.ExtractMonoAudioFiles.labelmutation})
-        #opts.update({'featuremutation': ef.ExtractMonoAudioFiles.featurefunc, 'labelmutation': ef.ExtractMonoAudioFiles.labelmutation})
-        #opts.update({'labelmutation': ef.ExtractMonoAudioFiles.labelmutation})
-
         self.nbfeatures = None
         self.nblabels = emaf.nblabels
 
@@ -106,8 +79,6 @@ class AudioFeeder(Feeder):
         return self.db.count(emaf.tablecontext)
 
     def choiceintosamples(self, choice):
-#        assert choice.ndim == 1
-#        assert choice
         nbsamples = choice.size
         nblabels = self.nblabels
         tmpres = self.db.get(emaf.tablecontext, choice)
@@ -152,4 +123,56 @@ class AudioFeederContext(AudioFeeder):
             ids = np.array([idt[0] for idt in self.db.get(emaf.tablecontext, sampleit, ['id'], 'sample_id')])
             res.append(self.choiceintosamples(ids))
         return res
+
+class AudioFeederFullContext(AudioFeederContext):
+    def __init__(self, featurespath, labelspath=None, opts={}):
+        opts.update({'nbaverage': 3})
+
+        self.nbaverage = opts['nbaverage']
+        
+        super().__init__(opts)
+
+    def choiceintosamples(self, choice):
+        nbsamples = choice.size
+        nblabels = self.nblabels
+
+        smartchoice = [None] * (nbsamples * self.nbaverage)
+
+        for i in range(nbsamples):
+            for j in range(self.nbaverage):
+                smartchoice[i*self.nbaverage + j] = choice[i] +j
+
+        tmpres = self.db.get(emaf.tablecontext, smartchoice)
+
+        if self.nbfeatures is None:
+            self.nbfeatures = len(tmpres[0]) - 3
+        nbfeatures = self.nbfeatures
+
+        features = np.zeros(shape=(nbsamples, nbfeatures))
+        labels = np.zeros(shape=(nbsamples, nblabels))
+
+        restoparse = {feat[0]: (feat[2], feat[3:]) for feat in features}
+
+        try:
+            res = []
+            for i in range(nbsamples):
+                batch = [None] * self.nbaverage
+                batch[0] = restoparse[smartchoice[i*self.nbaverage]][1]
+                sample = restoparse[smartchoice[i*self.nbaverage]][0]
+                for j in range(1,self.nbaverage):
+                    batch[j] = restoparse[smartchoice[i*self.nbaverage + j]]
+                    if batch[j][0] == sample:
+                        batch[j] = batch[j][1]
+                    else:
+                        batch = None
+                        break
+                if batch is not None:
+                    res.append(fonctionmontal(batch))
+        except IndexError:
+            if restoparse is not None:
+                nbreturned = len(restoparse)
+            else:
+                nbreturned = 0
+            print("%d/%d returned" % (nbreturned, choice.size * self.nbaverage))
+        return (features, labels)
 
