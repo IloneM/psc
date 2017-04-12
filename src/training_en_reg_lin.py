@@ -4,61 +4,60 @@ from extractfeatures import ExtractMonoAudioFiles as emaf
 import tensorflow as tf
 import feedermysql as feeder
 
-#featureext = ef.lrft.melspectrogram
-#import data base
-#ex = ef.Examples(workingpath, featureext, nblabels, batchsize=n)
-#print("entering feeder")
-#exfeeder = feeder.AudioFeederContext(emaf.inpath, opts={'batchsize': emaf.batchsize})
-exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
-#print("exiting feeder")
-n = exfeeder.nbfeatures #size of the vectors (a modifier)
+# featureext = ef.lrft.melspectrogram
+# import data base
+#  ex = ef.Examples(workingpath, featureext, nblabels, batchsize=n)
+#  print("entering feeder")
+exfeeder = feeder.AudioFeederContext(emaf.inpath, opts={'batchsize': emaf.batchsize})
+# exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
+# print("exiting feeder")
+n = exfeeder.nbfeatures  # size of the vectors (a modifier)
 nblabels = exfeeder.nblabels
 
 data_size = exfeeder.nbtests
 
 next_batch = exfeeder
 
-#définition des placeholders
-
-#features
-x = tf.placeholder(tf.float32, [None, n])
-
-#paramètres (poids)
-def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
-
-def bias_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.01)
-    return tf.Variable(initial)
-
-W = weight_variable([n, nblabels])
-b = bias_variable([nblabels])
-
-
-
-#approximation de y (vecteur stochastique de proba)
-y = tf.nn.softmax(tf.matmul(x, W) + b) #modèle
-
-#le label des features x
-y_ = tf.placeholder(tf.float32, [None, nblabels])
-
-#fonction de cout (permet de
-cross_entropy = tf.reduce_mean(tf.reduce_sum(tf.pow(y-y_,2)))
-
-train_step = tf.train.GradientDescentOptimizer(0.01).minimize(cross_entropy)
-
-
-
-init = tf.global_variables_initializer()
-
-sess = tf.Session()
-
 
 def getWb(tours):
+
+
+    # définition des placeholders
+
+    # features
+    x = tf.placeholder(tf.float32, [None, n])
+
+    # paramètres (poids)
+    def weight_variable(shape):
+        initial = tf.truncated_normal(shape, stddev=0.1)
+        return tf.Variable(initial)
+
+    def bias_variable(shape):
+        initial = tf.truncated_normal(shape, stddev=0.01)
+        return tf.Variable(initial)
+
+    W = weight_variable([n, nblabels])
+    b = bias_variable([nblabels])
+
+    # approximation de y (vecteur stochastique de proba)
+    y = tf.nn.softmax(tf.matmul(x, W) + b)  # modèle
+
+    # le label des features x
+    y_ = tf.placeholder(tf.float32, [None, nblabels])
+
+    # fonction de cout (permet de
+    cross_entropy = tf.reduce_mean(tf.reduce_sum(tf.pow(y - y_, 2)))
+
+    train_step = tf.train.GradientDescentOptimizer(0.01).minimize(cross_entropy)
+
+    init = tf.global_variables_initializer()
+
+    sess = tf.Session()
+
     sess.run(init)
+
     #tours * exfeeder.nbsamples // emaf.batchsize
-    for i in range(1000):
+    for i in range(100):
         #il n'y pas de raison pour que le nombre d'itérations soit ca (Raph)
         #avec tours = 1 on passe en moyenne une fois par exemple
 
