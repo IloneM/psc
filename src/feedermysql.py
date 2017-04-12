@@ -31,7 +31,8 @@ class Feeder(metaclass=ABCMeta):
         if self.examplemode:
             if batchsize > self.nbexamples:
                 raise IndexError
-            choice = np.random.choice(self.nbexamples, batchsize, False)
+            #add use arange from 1 to nbexamples+1 because of the diff of indexiation between mysql and arrays in python (from 1 vs from 0)
+            choice = np.random.choice(np.arange(1,self.nbexamples+1) , batchsize, False)
             return self.choiceintosamples(choice)
         else:
             return self.controlprocess(batchsize)
@@ -51,7 +52,8 @@ class Feeder(metaclass=ABCMeta):
     def controlprocess(self, batchsize):
         if batchsize > self.nbtests:
             raise IndexError
-        choice = np.random.choice(np.arange(self.nbexamples, self.nbsamples), batchsize, False)
+        #add 1 to nbexamples and nbsamples because of the diff of indexiation between mysql and arrays in python (from 1 vs from 0)
+        choice = np.random.choice(np.arange(self.nbexamples+1, self.nbsamples+1), batchsize, False)
         return self.choiceintosamples(choice)
 
     @abstractmethod
@@ -66,9 +68,11 @@ class Feeder(metaclass=ABCMeta):
         return int(np.ceil(self.nbsamples * self.opts['examplesratio']))
 
 class AudioFeeder(Feeder):
-    def __init__(self, featurespath, labelspath=None, opts={}):
+    def __init__(self, opts={}):
         self.nbfeatures = None
         self.nblabels = emaf.nblabels
+
+        print(opts)
 
         super().__init__(opts)
 
@@ -101,6 +105,8 @@ class AudioFeeder(Feeder):
             else:
                 nbreturned = 0
             print("%d/%d returned" % (nbreturned, choice.size))
+            features = features[:nbreturned]
+            labels = labels[:nbreturned]
         return (features, labels)
 
 class AudioFeederContext(AudioFeeder):
@@ -120,16 +126,17 @@ class AudioFeederContext(AudioFeeder):
         res = []
         nbgroupedsamples = len(self.itempersample)
         for sampleit in range(self.examplefirstitem, nbgroupedsamples):
-            ids = np.array([idt[0] for idt in self.db.get(emaf.tablecontext, sampleit, ['id'], 'sample_id')])
+            #add 1 to sampleit because of the diff of indexiation between mysql and arrays in python (from 1 vs from 0)
+            ids = np.array([idt[0] for idt in self.db.get(emaf.tablecontext, sampleit+1, ['id'], 'sample_id')])
             res.append(self.choiceintosamples(ids))
         return res
 
 class AudioFeederFullContext(AudioFeederContext):
-    def __init__(self, featurespath, labelspath=None, opts={}):
+    def __init__(self, opts={}):
         opts.update({'nbaverage': 3})
 
         self.nbaverage = opts['nbaverage']
-        
+
         super().__init__(opts)
 
     def choiceintosamples(self, choice):
@@ -151,28 +158,50 @@ class AudioFeederFullContext(AudioFeederContext):
         features = np.zeros(shape=(nbsamples, nbfeatures))
         labels = np.zeros(shape=(nbsamples, nblabels))
 
-        restoparse = {feat[0]: (feat[2], feat[3:]) for feat in features}
+        restoparse = {feat[0]: (feat[2], feat[3:]) for feat in tmpres}
 
-        try:
-            res = []
-            for i in range(nbsamples):
-                batch = [None] * self.nbaverage
+        nberrors = 0
+        for i in range(nbsamples):
+            batch = np.zeros(shape=(self.nbaverage, nbfeatures))
+            try:
                 batch[0] = restoparse[smartchoice[i*self.nbaverage]][1]
                 sample = restoparse[smartchoice[i*self.nbaverage]][0]
-                for j in range(1,self.nbaverage):
-                    batch[j] = restoparse[smartchoice[i*self.nbaverage + j]]
-                    if batch[j][0] == sample:
-                        batch[j] = batch[j][1]
+                for j in range(1, self.nbaverage):
+                    tupleres = restoparse[smartchoice[i*self.nbaverage + j]]
+                    if tupleres[0] == sample:
+                        batch[j] = tupleres[1]
                     else:
                         batch = None
+                        #print("%d is not in sample range. Passing" % (i,))
+                        nberrors += 1
                         break
-                if batch is not None:
-                    res.append(fonctionmontal(batch))
-        except IndexError:
-            if restoparse is not None:
-                nbreturned = len(restoparse)
-            else:
-                nbreturned = 0
-            print("%d/%d returned" % (nbreturned, choice.size * self.nbaverage))
+            except IndexError:
+                print("%d has not all features available. Passing." % (i,))
+                nberrors += 1
+#            except KeyError:
+#                print(batch)
+#                print(i)
+#                print(self.nbaverage)
+#                print(smartchoice[i*self.nbaverage])
+#                print(restoparse[smartchoice[i*self.nbaverage]])
+#                raise KeyError
+            if batch is not None:
+                features[i-nberrors] = np.mean(batch, 0)
+
+        if nberrors > 0:
+            nbreturned = nbsamples - nberrors
+            print("%d/%d returned" % (nbreturned, nbsamples))
+            features = features[:nbreturned]
+            labels = labels[:nbreturned]
+
         return (features, labels)
+
+    def lissage(self, u, i):
+        shape = np.asarray(np.shape(u))
+        n = shape[0]
+        shape[0] = n-i
+        up = np.zeros(shape)
+        for j in range(n-i):
+            up[j] = np.mean(u[j:j+i+1], 0)
+        return up
 

@@ -2,7 +2,7 @@ import numpy as np
 from extractfeatures import FeaturesExtractor as fe
 import tensorflow as tf
 import feeder
-import training_en_reg_lin
+#import training_en_reg_lin
 import numpy as np
 import numpy as np
 #from extractfeatures import FeaturesExtractor as fe
@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from tkinter import *
 
-exfeeder = feeder.AudioFeeder(emaf.inpath, opts={'batchsize': emaf.batchsize})
+exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize})
 
 n = exfeeder.nbfeatures
 
@@ -104,7 +104,7 @@ print("pourcentage d'extraits musicaux de controle labellés correctement")
 # c'est une liste dont les éléments sont un couple (spectrogram, label) correspondant à un extrait musical entier
 
 #af = feeder.AudioFeeder(emaf.inpath, opts={'contextmode': True})
-af = training_en_reg_lin.exfeeder
+af = exfeeder
 #af.opts['contextmode'] = True
 af.switchmode()
 
