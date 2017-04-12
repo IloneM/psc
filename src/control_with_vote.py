@@ -63,7 +63,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 vote = tf.argmax(tf.reduce_sum(y, 0), 0)
 
-tours =5
+tours =1
 
 entropy_graph = np.zeros(tours * exfeeder.nbsamples // emaf.batchsize)
 accuracy_graph = np.zeros(tours * exfeeder.nbsamples // emaf.batchsize)
@@ -113,18 +113,21 @@ samples = af.getbatch()
 s = 0.
 total = 0.
 for e in samples:
-    print("sample number "+ str(total))
     current_x = e[0]
     current_label = np.argmax(e[1][0])
     #print("current x :")
     #print(current_x)
-    print("current label :")
-    print(current_label)
-    print("vote")
-    print(sess.run(vote,feed_dict={x: current_x, y_: e[1]}))
+
     if (sess.run(vote, feed_dict={x: current_x, y_: e[1]}) == current_label):
         s = s + 1.
+    else:
+        print("sample number " + str(total)+" unsuccessful")
+        print("current label :")
+        print(current_label)
+        print("vote")
+        print(sess.run(vote, feed_dict={x: current_x, y_: e[1]}))
     total += 1.
+
 print("pourcentage d'enculé ")
 print(s / total)
 
