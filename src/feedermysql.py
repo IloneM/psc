@@ -8,8 +8,9 @@ from abc import *
 
 class Feeder(metaclass=ABCMeta):
     def __init__(self, opts={}):
-        opts.update({'examplesratio': 0.95, 'dbname': emaf.outdb})
-        self.opts = opts
+        defopts = {'examplesratio': 0.95, 'dbname': emaf.outdb}
+        defopts.update(opts)
+        self.opts = opts = defopts
 
         self.db = Database(self.opts['dbname'])
 
@@ -72,8 +73,6 @@ class AudioFeeder(Feeder):
         self.nbfeatures = None
         self.nblabels = emaf.nblabels
 
-        print(opts)
-
         super().__init__(opts)
 
         #nbfeatures definition
@@ -133,7 +132,9 @@ class AudioFeederContext(AudioFeeder):
 
 class AudioFeederFullContext(AudioFeederContext):
     def __init__(self, opts={}):
-        opts.update({'nbaverage': 3})
+        defopts = {'nbaverage': 3}
+        defopts.update(opts)
+        opts = defopts
 
         self.nbaverage = opts['nbaverage']
 
@@ -158,7 +159,7 @@ class AudioFeederFullContext(AudioFeederContext):
         features = np.zeros(shape=(nbsamples, nbfeatures))
         labels = np.zeros(shape=(nbsamples, nblabels))
 
-        restoparse = {feat[0]: (feat[2], feat[3:]) for feat in tmpres}
+        restoparse = {feat[0]: (feat[2], feat[3:], feat[1]) for feat in tmpres}
 
         nberrors = 0
         for i in range(nbsamples):
@@ -184,12 +185,21 @@ class AudioFeederFullContext(AudioFeederContext):
                 nberrors += 1
             if batch is not None:
                 features[i-nberrors] = np.mean(batch, 0)
+                labels[i-nberrors, restoparse[smartchoice[i*self.nbaverage]][2]] = 1.
 
         if nberrors > 0:
             nbreturned = nbsamples - nberrors
             print("%d/%d returned" % (nbreturned, nbsamples))
             features = features[:nbreturned]
             labels = labels[:nbreturned]
+
+        #print(labels)
+        #print(features)
+        feattocmp = super().choiceintosamples(choice)
+
+#        assert np.array_equal(np.array(smartchoice), choice)
+#        assert np.allclose(feattocmp[1], labels)
+#        assert np.allclose(feattocmp[0], features)
 
         return (features, labels)
 

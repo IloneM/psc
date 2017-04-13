@@ -13,7 +13,11 @@ from matplotlib import pyplot as plt
 import numpy as np
 from tkinter import *
 
-exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize})
+#exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize, 'nbaverage': 1})
+#exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize, 'nbaverage': 1})
+exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize, 'nbaverage': 4})
+
+tours = 3
 
 n = exfeeder.nbfeatures
 
@@ -43,7 +47,7 @@ W = weight_variable([n, nblabels])
 b = bias_variable([nblabels])
 
 #approximation de y (vecteur stochastique de proba)
-y = tf.nn.softmax(tf.matmul(x, W) + b)
+y = tf.nn.softmax(tf.matmul(x, W) + b, 0)
 
 #le label des features x
 y_ = tf.placeholder(tf.float32, [None, nblabels])
@@ -62,8 +66,6 @@ correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 vote = tf.argmax(tf.reduce_sum(y, 0), 0)
-
-tours =5
 
 entropy_graph = np.zeros(tours * exfeeder.nbsamples // emaf.batchsize)
 accuracy_graph = np.zeros(tours * exfeeder.nbsamples // emaf.batchsize)
