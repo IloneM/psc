@@ -1,29 +1,28 @@
 import numpy as np
 from extractfeatures import FeaturesExtractor as fe
 import tensorflow as tf
-import feeder
+import feedernewflavour as feeder
 #import training_en_reg_lin
 import numpy as np
 import numpy as np
 #from extractfeatures import FeaturesExtractor as fe
-from extractfeatures import ExtractMonoAudioFiles as emaf
+from extractfeaturesnew import ExtractMonoAudioFiles as emaf
 import tensorflow as tf
-import feedermysql as feeder
+#import feedermysql as feeder
 from matplotlib import pyplot as plt
 import numpy as np
 from tkinter import *
 
 #exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize, 'nbaverage': 1})
 #exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize, 'nbaverage': 1})
-exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize, 'nbaverage': 4})
+#exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize, 'nbaverage': 4})
+exfeeder = feeder.Feeder(emaf.outpath, opts={'batchsize': emaf.batchsize})
 
-tours = 3
+tours = 2
 
 n = exfeeder.nbfeatures
 
 nblabels = exfeeder.nblabels
-
-data_size = exfeeder.nbtests
 
 next_batch = exfeeder
 
@@ -67,16 +66,16 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 vote = tf.argmax(tf.reduce_sum(y, 0), 0)
 
-entropy_graph = np.zeros(tours * exfeeder.nbsamples // emaf.batchsize)
-accuracy_graph = np.zeros(tours * exfeeder.nbsamples // emaf.batchsize)
-time = np.zeros(tours * exfeeder.nbsamples // emaf.batchsize)
+entropy_graph = np.zeros(tours * exfeeder.approxnbexamplesitems // emaf.batchsize)
+accuracy_graph = np.zeros(tours * exfeeder.approxnbexamplesitems // emaf.batchsize)
+time = np.zeros(tours * exfeeder.approxnbexamplesitems // emaf.batchsize)
 
 sess.run(init)
 
 
 
-for i in range(tours * exfeeder.nbsamples // emaf.batchsize):
-    print("batch %d/%d" % (i + 1, tours * exfeeder.nbsamples // emaf.batchsize))
+for i in range(tours * exfeeder.approxnbexamplesitems // emaf.batchsize):
+    print("batch %d/%d" % (i + 1, tours * exfeeder.approxnbexamplesitems // emaf.batchsize))
     time[i] = i
     # on effectue une étape de l'entrainement (c'est a dire un gradient descent sur tout le batch)
     batch_xs, batch_ys = next_batch()
@@ -108,13 +107,10 @@ print("pourcentage d'extraits musicaux de controle labellés correctement")
 #af = feeder.AudioFeeder(emaf.inpath, opts={'contextmode': True})
 af = exfeeder
 #af.opts['contextmode'] = True
-af.switchmode()
-
-samples = af.getbatch()
 
 s = 0.
 total = 0.
-for e in samples:
+for e in exfeeder:
     print("sample number "+ str(total))
     current_x = e[0]
     current_label = np.argmax(e[1][0])

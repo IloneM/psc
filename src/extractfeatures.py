@@ -1,5 +1,6 @@
 from os import listdir,remove
 from os.path import join,isfile
+from six import iteritems
 import librosa.feature as lrft
 import librosa.core as lrco
 import numpy as np
@@ -12,14 +13,28 @@ def absolutepromt(prompt="Enter y/n?",choices=["Y","y","n","N"],yeschoices=['Y',
             return result in yeschoices
         print(error)
 
+def fileremoved(outfile):
+    if isfile(outfile):
+        if absolutepromt("File %s exists in filesystem. Do you want to erase it? (y/n) " % (outfile,)):
+            remove(outfile)
+        else:
+            return False
+    return True
+
 class FeaturesExtractor:
-    def __init__(self, inpath, computedatafunc, extractmetadatafunc, outpath=None):
+    def savelabel(self, outfile, dat):
+        pass
+
+    def savefeature(self, outfile, dat):
+        pass
+
+    def __init__(self, inpath, outpath, computedatafunc, extractmetadatafunc):
         self.inpath = inpath
         self.computedatafunc = computedatafunc
         self.extractmetadatafunc = extractmetadatafunc
         self.outpath = outpath
 
-    def __call__(self, inpath=None, computedatafunc=None, extractmetadatafunc=None, outpath=None):
+    def __call__(self, inpath=None, outpath=None, computedatafunc=None, extractmetadatafunc=None):
         if inpath is None:
             inpath = self.inpath
         if computedatafunc is None:
@@ -28,27 +43,9 @@ class FeaturesExtractor:
             extractmetadatafunc = self.extractmetadatafunc
         if outpath is None:
             outpath = self.outpath
-        FeaturesExtractor.extract(inpath, computedatafunc, extractmetadatafunc, outpath)
+        self.extract(inpath, outpath, computedatafunc, extractmetadatafunc)
 
-    @staticmethod
-    def extract(inpath, computedatafunc, extractmetadatafunc, outpath=None):
-        if outpath is None:
-            outpath = inpath
-
-        outdatapaths = FeaturesExtractor.getdatapaths(outpath)
-        for odp in outdatapaths:
-            if isfile(odp):
-                if absolutepromt("File %s exists in filesystem. Do you want to erase it? (y/n) " % (odp,)):
-                    ##erase file
-                    #with open(odp, 'w') as fs:
-                    #    pass
-
-                    #remove file; will be recreated after
-                    remove(odp)
-                else:
-                    print("Then please consider resolving this file conflict before relaunching.")
-                    return
-
+    def extract(self, inpath, outpath, computedatafunc, extractmetadatafunc):
         files = [f for f in listdir(inpath) if f.endswith('.txt')]
 
         nbfiles = len(files)
@@ -56,24 +53,25 @@ class FeaturesExtractor:
             raise ValueError('you must provide a least one file.')
 
         loopit = 1
+        self.metas = np.zeros(shape=(nbfiles, 1), dtype=int)
         for smd in extractmetadatafunc(inpath, files):
-            FeaturesExtractor.__storedata(outdatapaths, computedatafunc(inpath, smd))
+            self.__storedata(outpath, computedatafunc(inpath, smd), loopit)
 
             if loopit in [1, nbfiles] or not loopit % 100:
                 print('loading file %d/%d' % (loopit, nbfiles))
             loopit += 1
+        np.savetxt(join(outpath, 'meta.dat'), self.metas, header='nbitems', fmt='%i')
 
-    @staticmethod
-    def __storedata(outpaths, data):
-        assert len(outpaths) == len(data) and len(data) == 2
+    def __storedata(self, outpath, data, it):
+        self.metas[it-1, 0] = data[0].shape[0]
 
-        for i in range(2):
-            with open(outpaths[i], 'ab') as fs:
-                np.savetxt(fs, data[i])
+        outfile = join(outpath, 'feature_%d' % (it,))
+        if fileremoved(outfile):
+            self.savefeature(outfile, data[0])
 
-    @staticmethod
-    def getdatapaths(outpath):
-        return (join(outpath, 'features.dat'), join(outpath, 'labels.dat'))
+        outfile = join(outpath, 'label_%d' % (it,))
+        if fileremoved(outfile):
+            self.savelabel(outfile, data[1])
 
 class ExtractMonoAudioFiles(FeaturesExtractor):
     #static vars to be manually set
@@ -81,9 +79,14 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
     sr = 44100
     nblabels = 88
     batchsize = 1000
+    #featurefunc = lambda y, sr: lrft.mfcc(y, sr).T
+    #outpath = 'outdata/mfcc_20'
+    featurefunc = lambda y, sr: lrft.mfcc(y, sr, n_mfcc=5).T
+    outpath = 'outdata/mfcc_5'
     #featurefunc = lambda y, sr: lrft.mfcc(y, sr, n_mfcc=1).T
-    #featurefunc = lambda *x: x
-    featurefunc = lambda y, sr: lrft.melspectrogram(y, sr).T
+    #outpath = 'outdata/mfcc_1'
+    #featurefunc = lambda y, sr: lrft.melspectrogram(y, sr).T
+    #outpath = 'outdata/melspectrogram_128'
     inpath = '../simple-wdir'
     
     #for feeder
@@ -95,16 +98,20 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
         labelvect[:, int(pitch)] = np.ones(nbsamples)
         return labelvect
 
-    def __init__(self, inpath=None):
+    def __init__(self, inpath=None, outpath=None):
         if inpath is None:
             self.inpath = ExtractMonoAudioFiles.inpath
         else:
             self.inpath = inpath
-#        if featurefunc is None:
-#            self.featurefunc = ExtractMonoAudioFiles.featurefunc
-#        else:
-#            self.featurefunc = featurefunc
-        super().__init__(self.inpath, ExtractMonoAudioFiles.computefeatureddata, ExtractMonoAudioFiles.extractsamplesmetadata)
+
+        if outpath is None:
+            self.outpath = ExtractMonoAudioFiles.outpath
+        else:
+            self.outpath = outpath
+        self.savefeature = np.savetxt
+
+
+        super().__init__(self.inpath, self.outpath, ExtractMonoAudioFiles.computefeatureddata, ExtractMonoAudioFiles.extractsamplesmetadata)
 
     @staticmethod
     def extractsamplesmetadata(path, filelist):
@@ -127,10 +134,14 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
                              offset=meta[1], duration=meta[2])
         audiodat = ExtractMonoAudioFiles.featurefunc(*audiodat)
 
-        pitchvect = np.array([pitch] * audiodat.shape[0])
+        #pitchvect = np.array([pitch] * audiodat.shape[0])
 
-        #return (audiodat, pitch)
-        return (audiodat, pitchvect)
+        return (audiodat, pitch)
+        #return (audiodat, pitchvect)
+
+    def savelabel(self, outfile, dat):
+        with open(outfile, 'w') as fs:
+            fs.write(str(dat))
 
 if __name__ == '__main__':
     if len(sys.argv) > 2:
