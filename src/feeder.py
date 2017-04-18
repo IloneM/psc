@@ -5,6 +5,7 @@ cpu_count = lambda: 20
 #Thread = Process
 from os.path import join
 from extractfeatures import ExtractMonoAudioFiles as emaf
+import feedermysql as fm
 
 #We have several (~2000) files which are here refered as "samples".
 #Each file has several lines of featured content which are refered as "items".
@@ -91,7 +92,7 @@ class Feeder:
         self.dataloaded.set()
             
     def __init__(self, inpath, opts={}):
-        defopts = {'examplesratio': 0.95, 'beginlearningratio': .5, 'deep': False}
+        defopts = {'examplesratio': 0.95, 'beginlearningratio': .75, 'deep': False, 'deepbatchsize': 64}
         defopts.update(opts)
         self.opts = opts = defopts
 
@@ -139,29 +140,45 @@ class Feeder:
             self.batchsize = opts['batchsize']
         else:
             self.batchsize = None
+        if 'deepbatchsize' in opts:
+            self.deepbatchsize = opts['deepbatchsize']
+        else:
+            self.deepbatchsize = None
 
         self.testsampleit = None
 
-    def getdeepbatch(self, batchsize=None):
+        self.myslqtest = fm.AudioFeederContext(opts)
+
+    def getdeepbatch(self, batchsize=None, deepbatchsize=None):
         self.learnable.wait()
 
         if batchsize is None:
             batchsize = self.batchsize
         if batchsize is None:
             raise ValueError("You must provide a valid batchsize.")
+        if deepbatchsize is None:
+            deepbatchsize = self.deepbatchsize
+        if deepbatchsize is None:
+            raise ValueError("You must provide a valid deepbatchsize.")
 
-        samplechoice = np.random.choice(self.nblearningsamplesready)
-        samplesize = self.nbitemsinsampleasready[samplechoice]
-        batchsize = min(batchsize, samplesize)
-        relativeindexchoice = np.random.choice(samplesize-batchsize)
-
-        begin = self.siii[samplechoice] + relativeindexchoice
-        end = begin + batchsize
-
+        batchsize = min(batchsize, self.nblearningitemsready)
         if self.nblearningitemsready == self.nbitemsready:
             print("Learning items ready: %d/~%d" % (self.nblearningitemsready, self.approxnbexamplesitems))
 
-        batchfeatures, batchlabels = (self.mergeditems[begin:end], self.mergedlabels[begin:end])
+        batchfeatures = np.zeros(shape=(batchsize, self.nbfeatures, deepbatchsize))
+        batchlabels = np.zeros(shape=(batchsize, self.nblabels, deepbatchsize))
+
+        for i in range(batchsize):
+            samplechoice = np.random.choice(self.nblearningsamplesready)
+            samplesize = self.nbitemsinsampleasready[samplechoice]
+            deepbatchsize = min(deepbatchsize, samplesize)
+            relativeindexchoice = np.random.choice(samplesize-deepbatchsize)
+
+            begin = self.siii[samplechoice] + relativeindexchoice
+            end = begin + deepbatchsize
+
+            batchfeatures[i] = self.mergeditems[begin:end].T
+            batchlabels[i] = self.mergedlabels[begin:end].T
         return (batchfeatures, batchlabels)
 
     def getbatch(self, batchsize=None):
@@ -179,6 +196,32 @@ class Feeder:
 
         batchfeatures, batchlabels = (self.mergeditems[choice], self.mergedlabels[choice])
         return (batchfeatures, batchlabels)
+
+    def challengethis(self):
+        choice = np.random.choice(self.nbsamplesready)
+        frommysql = self.myslqtest.db.get(emaf.tablecontext, self.samplesready[choice], idfield='sample_id')
+
+        nbsamples = len(frommysql)
+        features = np.zeros(shape=(nbsamples, nbfeatures))
+        labels = np.zeros(shape=(nbsamples, nblabels))
+
+        try:
+            for i in range(nbsamples):
+                line = list(tmpres[i])
+                features[i] = line[3:]
+                labels[i, line[1]] = 1.
+            begin = self.siii[choice]
+            end = begin + self.nbitemsinsample[choice]
+            assert np.allclose(frommysql[0], self.mergeditems[begin:end])
+#            assert np.allclose(frommysql[1], self.mergedlabels[begin:end])
+        except AssertionError:
+            print("error!!")
+        except IndexError:
+            if tmpres is not None:
+                nbreturned = len(tmpres)
+            else:
+                nbreturned = 0
+            print("%d/%d returned" % (nbreturned, choice.size))
 
     def getfulltests(self):
         self.dataloaded.wait()

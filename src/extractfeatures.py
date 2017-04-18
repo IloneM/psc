@@ -80,8 +80,8 @@ class ExtractMonoAudioFiles(FeaturesExtractor):
     ##the natural byterate of the examples here but we can consider modifying it
     sr = 44100
 #TOCHANGE
-    #nblabels = 88
-    nblabels = 89
+    nblabels = 88
+#    nblabels = 89
     batchsize = 1000
     #featurefunc = lambda y, sr: lrft.mfcc(y, sr).T
     #outpath = 'outdata/mfcc_20'
