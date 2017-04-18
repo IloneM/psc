@@ -1,10 +1,10 @@
 import numpy as np
 from threading import Thread,Lock,Event
-cpu_count = lambda: 4
+cpu_count = lambda: 20
 #from multiprocessing import Process,Lock,Event,cpu_count
 #Thread = Process
 from os.path import join
-from extractfeaturesnew import ExtractMonoAudioFiles as emaf
+from extractfeatures import ExtractMonoAudioFiles as emaf
 
 #We have several (~2000) files which are here refered as "samples".
 #Each file has several lines of featured content which are refered as "items".
@@ -12,7 +12,7 @@ from extractfeaturesnew import ExtractMonoAudioFiles as emaf
 
 class Feeder:
     def loadlabel(self, it):
-        nbitems = self.siii[it]
+        nbitems = self.nbitemsinsample[it]
         nblabels = self.nblabels
         with open(join(self.inpath, 'label_%d' % (it+1,)), 'r') as fs:
             pitch = int(fs.read())
@@ -32,23 +32,30 @@ class Feeder:
         newsampleid = newsampledata[0]
         newfeatures = newsampledata[1]
         newlabels = newsampledata[2]
+        nbitemsinnewsample = self.nbitemsinsample[newsampleid]
 
-        begin = self.nbitemsavailable
-        end = self.nbitemsavailable + self.siii[newsampleid]
+        assert nbitemsinnewsample == newfeatures.shape[0] == newlabels.shape[0]
+
+        begin = self.nbitemsready
+        end = self.nbitemsready + self.nbitemsinsample[newsampleid]
+
         self.mergeditems[begin:end] = newfeatures
         self.mergedlabels[begin:end] = newlabels
 
         self.samplesready.append(newsampleid)
-        self.nbitemsavailable = end
+        self.nbitemsinsampleasready.append(nbitemsinnewsample)
+        self.siii.append(begin)
+        self.nbitemsready = end
 
         nbsamplesready = self.nbsamplesready = len(self.samplesready)
         if nbsamplesready <= self.nbexamplessamples:
-            self.learningitemsavailable = end
+            self.nblearningsamplesready = nbsamplesready
+            self.nblearningitemsready = end
 
             if not self.learnable.is_set() and nbsamplesready >= self.beginlearnceil:
                 self.learnable.set()
         else:
-            self.newtestavailable.set()
+            self.newtestready.set()
 
     def loaddata(self):
         nbthreads = cpu_count()
@@ -80,23 +87,25 @@ class Feeder:
             threads[tit].join()
             with updatelock:
                 self.updateloadeddata(threadswork[tit])
+
+        self.dataloaded.set()
             
     def __init__(self, inpath, opts={}):
-        defopts = {'examplesratio': 0.95, 'beginlearningratio': 0.1}
+        defopts = {'examplesratio': 0.95, 'beginlearningratio': .5, 'deep': False}
         defopts.update(opts)
         self.opts = opts = defopts
 
         self.inpath = inpath
 
-        self.metadatas = np.loadtxt(join(inpath, 'meta.dat'), dtype=int)
-        #sample indexes in items i.e the first item of a sample considering agregaeded items
-        self.siii = self.metadatas
+        self.metadatas = np.loadtxt(join(inpath, 'meta.dat'), dtype=int, ndmin=2)
+        self.nbitemsinsample = self.metadatas[:, 0]
+        #self.siii = self.metadatas[:, 1]
 
-        self.nbsamples = self.siii.size
+        self.nbsamples = self.nbitemsinsample.size
         self.nbexamplessamples = int(np.ceil(self.nbsamples * opts['examplesratio']))
         self.beginlearnceil = int(np.ceil(self.nbexamplessamples * opts['beginlearningratio']))
 #        self.nbtestsamples = self.nbsamples - self.nbexamplessamples
-        self.nbitems = sum(self.siii)
+        self.nbitems = sum(self.nbitemsinsample)
         self.approxnbexamplesitems = int(np.ceil(self.nbitems * opts['examplesratio']))
         self.nbfeatures = int(inpath.split('_')[-1])
         self.nblabels = emaf.nblabels
@@ -104,12 +113,18 @@ class Feeder:
         self.mergeditems = np.zeros(shape=(self.nbitems, self.nbfeatures))
         self.mergedlabels = np.zeros(shape=(self.nbitems, self.nblabels))
 
+        #sample indexes in items i.e the first item of a sample considering agregaeded items
+        self.siii = []
         self.samplesready = []
+        self.nbitemsinsampleasready = []
         self.nbsamplesready = 0
-        self.nbitemsavailable = 0
-        self.learningitemsavailable = 0
+        self.nbitemsready = 0
+        self.nblearningsamplesready = 0
+        self.nblearningitemsready = 0
+
         self.learnable = Event()
-        self.newtestavailable = Event()
+        self.dataloaded = Event()
+        self.newtestready = Event()
 
         self.loadthread = Thread(target=self.loaddata)
         self.loadthread.start()
@@ -125,26 +140,54 @@ class Feeder:
         else:
             self.batchsize = None
 
-        self.testitemsit = None
         self.testsampleit = None
 
-    def getbatch(self, batchfeatures=None, batchlabels=None, batchsize=None):
+    def getdeepbatch(self, batchsize=None):
         self.learnable.wait()
 
         if batchsize is None:
             batchsize = self.batchsize
         if batchsize is None:
             raise ValueError("You must provide a valid batchsize.")
-        batchsize = min(batchsize, self.learningitemsavailable)
 
-        choice = np.random.choice(self.learningitemsavailable, batchsize, False)
-        print(self.learningitemsavailable)
+        samplechoice = np.random.choice(self.nblearningsamplesready)
+        samplesize = self.nbitemsinsampleasready[samplechoice]
+        batchsize = min(batchsize, samplesize)
+        relativeindexchoice = np.random.choice(samplesize-batchsize)
+
+        begin = self.siii[samplechoice] + relativeindexchoice
+        end = begin + batchsize
+
+        if self.nblearningitemsready == self.nbitemsready:
+            print("Learning items ready: %d/~%d" % (self.nblearningitemsready, self.approxnbexamplesitems))
+
+        batchfeatures, batchlabels = (self.mergeditems[begin:end], self.mergedlabels[begin:end])
+        return (batchfeatures, batchlabels)
+
+    def getbatch(self, batchsize=None):
+        self.learnable.wait()
+
+        if batchsize is None:
+            batchsize = self.batchsize
+        if batchsize is None:
+            raise ValueError("You must provide a valid batchsize.")
+        batchsize = min(batchsize, self.nblearningitemsready)
+
+        choice = np.random.choice(self.nblearningitemsready, batchsize, False)
+        if self.nblearningitemsready == self.nbitemsready:
+            print("Learning items ready: %d/~%d" % (self.nblearningitemsready, self.approxnbexamplesitems))
 
         batchfeatures, batchlabels = (self.mergeditems[choice], self.mergedlabels[choice])
         return (batchfeatures, batchlabels)
 
+    def getfulltests(self):
+        self.dataloaded.wait()
+        begin = self.nblearningitemsready
+        end = self.nbitems
+
+        return (self.mergeditems[begin:end], self.mergedlabels[begin:end])
+
     def __iter__(self):
-        self.testitemsit = self.learningitemsavailable
         self.testsampleit = self.nbexamplessamples
         return self
 
@@ -152,18 +195,19 @@ class Feeder:
         if self.testsampleit >= self.nbsamples:
             raise StopIteration
         while self.testsampleit >= self.nbsamplesready:
-            self.newtestavailable.clear()
-            self.newtestavailable.wait(1.)
-        begin = self.testitemsit
-        end = self.testitemsit + self.siii[self.samplesready[self.testsampleit]]
+            self.newtestready.clear()
+            self.newtestready.wait(1.)
+        begin = self.siii[self.testsampleit]
+        end = begin + self.nbitemsinsampleasready[self.testsampleit]
 
         self.testsampleit += 1
-        self.testitemsit = end
 
         return (self.mergeditems[begin:end], self.mergedlabels[begin:end])
 
-    def __call__(self, batchfeatures=None, batchlabels=None, batchsize=None):
-        return self.getbatch(batchfeatures, batchlabels, batchsize)
+    def __call__(self, batchsize=None):
+        if self.opts['deep']:
+            return self.getdeepbatch(batchsize)
+        return self.getbatch(batchsize)
 
 #class AudioFeeder(Feeder):
 #    def __init__(self, featurespath, labelspath=None, opts={}):

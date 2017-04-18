@@ -1,24 +1,21 @@
-import numpy as np
-from extractfeatures import FeaturesExtractor as fe
-import tensorflow as tf
-import feedernewflavour as feeder
+import feeder
 #import training_en_reg_lin
 import numpy as np
-import numpy as np
-#from extractfeatures import FeaturesExtractor as fe
-from extractfeaturesnew import ExtractMonoAudioFiles as emaf
 import tensorflow as tf
-#import feedermysql as feeder
-from matplotlib import pyplot as plt
-import numpy as np
 from tkinter import *
+from os.path import join,isfile
+from extractfeatures import ExtractMonoAudioFiles as emaf
+from matplotlib import pyplot as plt
 
 #exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize, 'nbaverage': 1})
 #exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize, 'nbaverage': 1})
 #exfeeder = feeder.AudioFeederFullContext(opts={'batchsize': emaf.batchsize, 'nbaverage': 4})
 exfeeder = feeder.Feeder(emaf.outpath, opts={'batchsize': emaf.batchsize})
 
-tours = 2
+weightspath = join(exfeeder.inpath, 'weights.dat')
+biasespath = join(exfeeder.inpath, 'biases.dat')
+
+tours = 20
 
 n = exfeeder.nbfeatures
 
@@ -27,7 +24,6 @@ nblabels = exfeeder.nblabels
 next_batch = exfeeder
 
 #définition des placeholders
-
 sess = tf.Session()
 
 #features
@@ -35,15 +31,27 @@ x = tf.placeholder(tf.float32, [None, n])
 
 #paramètres (poids)
 def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
+    if isinstance(shape, str):
+        initial = tf.pack(np.loadtxt(shape, dtype=np.float32))
+    else:
+        initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
 
 def bias_variable(shape):
-    initial = tf.constant(0.1, shape=shape)
+    if isinstance(shape, str):
+        initial = tf.pack(np.loadtxt(shape, dtype=np.float32))
+    else:
+        initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
 
-W = weight_variable([n, nblabels])
-b = bias_variable([nblabels])
+if isfile(weightspath) and isfile(biasespath):
+    print('Found old learning data. Using it.')
+    W = weight_variable(weightspath)
+    b = bias_variable(biasespath)
+else:
+    print('Old learning data not found. Using new.')
+    W = weight_variable([n, nblabels])
+    b = bias_variable([nblabels])
 
 #approximation de y (vecteur stochastique de proba)
 y = tf.nn.softmax(tf.matmul(x, W) + b, 0)
@@ -72,23 +80,27 @@ time = np.zeros(tours * exfeeder.approxnbexamplesitems // emaf.batchsize)
 
 sess.run(init)
 
-
-
 for i in range(tours * exfeeder.approxnbexamplesitems // emaf.batchsize):
-    print("batch %d/%d" % (i + 1, tours * exfeeder.approxnbexamplesitems // emaf.batchsize))
     time[i] = i
     # on effectue une étape de l'entrainement (c'est a dire un gradient descent sur tout le batch)
     batch_xs, batch_ys = next_batch()
     #print(sess.run(y, feed_dict={x: batch_xs, y_: batch_ys}))
     ent1, accu1 = sess.run([cross_entropy,accuracy], feed_dict={x: batch_xs, y_: batch_ys})
-    print("entropy1  "+ str(ent1))
-    print("accuracy1  " + str(accu1))
     accuracy_graph[i] = accu1
     sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
     ent2, accu2 = sess.run([cross_entropy, accuracy], feed_dict={x: batch_xs, y_: batch_ys})
-    print("entropy2  " + str(ent2))
-    print("accuracy2  "+str(accu2))
     entropy_graph[i] = ent2
+
+    if  (i+1) % 100 == 0 or i == 0:
+        print("batch %d/%d" % (i + 1, tours * exfeeder.approxnbexamplesitems // emaf.batchsize))
+        print("entropy1\t%f" % (ent1,))
+        print("accuracy1\t%f" % (accu1,))
+        print("entropy2\t%f" % (ent2,))
+        print("accuracy2\t%f" % (accu2,))
+
+        if (i+1) % 1000 == 0:
+            np.savetxt(weightspath, W.eval(sess))
+            np.savetxt(biasespath, b.eval(sess))
 
     #for gv in grads_and_vars:
      #   print(str(sess.run(gv[0])) + " - " + gv[1].name, feed_dict={x: batch_xs, y_: batch_ys})
@@ -98,6 +110,8 @@ plt.plot(time, entropy_graph)
 plt.figure(2)
 plt.plot(time, accuracy_graph)
 
+np.savetxt(weightspath, W.eval(sess))
+np.savetxt(biasespath, b.eval(sess))
 
 print("pourcentage d'extraits musicaux de controle labellés correctement")
 # dans cette partie on va mettre en place le système de vote. Il faudrait alors avoir#c'est une liste dont les éléments sont un couple (spectrogram, label) correspondant à un extrait musical entier
@@ -127,3 +141,4 @@ print("pourcentage d'enculé ")
 print(s / total)
 
 plt.show()
+
