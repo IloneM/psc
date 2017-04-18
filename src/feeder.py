@@ -5,6 +5,7 @@ cpu_count = lambda: 20
 #Thread = Process
 from os.path import join
 from extractfeatures import ExtractMonoAudioFiles as emaf
+from extractfeaturesmysql import ExtractMonoAudioFiles as emafms
 import feedermysql as fm
 
 #We have several (~2000) files which are here refered as "samples".
@@ -199,29 +200,40 @@ class Feeder:
 
     def challengethis(self):
         choice = np.random.choice(self.nbsamplesready)
-        frommysql = self.myslqtest.db.get(emaf.tablecontext, self.samplesready[choice], idfield='sample_id')
+        frommysql = self.myslqtest.db.get(emafms.tablecontext, self.samplesready[choice], idfield='sample_id')
 
         nbsamples = len(frommysql)
-        features = np.zeros(shape=(nbsamples, nbfeatures))
-        labels = np.zeros(shape=(nbsamples, nblabels))
+        features = np.zeros(shape=(nbsamples, self.nbfeatures))
+        labels = np.zeros(shape=(nbsamples, self.nblabels))
 
         try:
             for i in range(nbsamples):
-                line = list(tmpres[i])
+                line = list(frommysql[i])
                 features[i] = line[3:]
                 labels[i, line[1]] = 1.
-            begin = self.siii[choice]
-            end = begin + self.nbitemsinsample[choice]
-            assert np.allclose(frommysql[0], self.mergeditems[begin:end])
-#            assert np.allclose(frommysql[1], self.mergedlabels[begin:end])
-        except AssertionError:
-            print("error!!")
         except IndexError:
-            if tmpres is not None:
-                nbreturned = len(tmpres)
+            if frommysql is not None:
+                nbreturned = len(frommysql)
             else:
                 nbreturned = 0
             print("%d/%d returned" % (nbreturned, choice.size))
+
+        try:
+            begin = self.siii[choice]
+            end = begin + self.nbitemsinsample[choice]
+
+            assert nbsamples == end - begin
+            assert np.allclose(features, self.mergeditems[begin:end])
+            assert np.allclose(labels, self.mergedlabels[begin:end])
+        except AssertionError:
+            print("nbs mysql: %d\tnbs new:%d" % (nbsamples, end-begin))
+            print(features)
+            print(self.mergeditems[begin:end])
+            print()
+            print(labels)
+            print(self.mergedlabels[begin:end])
+            print('T' if np.allclose(labels, self.mergedlabels[begin:end]) else 'F')
+            print()
 
     def getfulltests(self):
         self.dataloaded.wait()
