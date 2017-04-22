@@ -199,41 +199,77 @@ class Feeder:
         return (batchfeatures, batchlabels)
 
     def challengethis(self):
-        choice = np.random.choice(self.nbsamplesready)
-        frommysql = self.myslqtest.db.get(emafms.tablecontext, self.samplesready[choice], idfield='sample_id')
+        self.dataloaded.wait()
 
-        nbsamples = len(frommysql)
-        features = np.zeros(shape=(nbsamples, self.nbfeatures))
-        labels = np.zeros(shape=(nbsamples, self.nblabels))
+        #samplestosearch = self.samplesready[:]
+        samplestosearch = self.samplesready
 
-        try:
-            for i in range(nbsamples):
-                line = list(frommysql[i])
-                features[i] = line[3:]
-                labels[i, line[1]] = 1.
-        except IndexError:
-            if frommysql is not None:
-                nbreturned = len(frommysql)
+        nbfound = 0
+
+        for i in range(self.nbsamples):
+            #frommysql = self.myslqtest.db.get(emafms.tablecontext, self.samplesready[choice], idfield='sample_id')
+            frommysql = self.myslqtest.db.get(emafms.tablecontext, i, idfield='sample_id')
+
+            nbitems = len(frommysql)
+            features = np.zeros(shape=(nbitems, self.nbfeatures))
+            labels = np.zeros(shape=(nbitems, self.nblabels))
+
+            try:
+                for j in range(nbitems):
+                    line = list(frommysql[j])
+                    features[j] = line[3:]
+                    labels[j, line[1]] = 1.
+            except IndexError:
+                if frommysql is not None:
+                    nbreturned = len(frommysql)
+                else:
+                    nbreturned = 0
+                print("%d/%d returned" % (nbreturned, nbitems))
+
+            labelFound = False
+            featureFound = False
+            bothTogether = False
+            for sampleid in range(len(samplestosearch)):
+                begin = self.siii[sampleid]
+                end = begin + self.nbitemsinsample[sampleid]
+
+                try:
+                    if nbitems == end - begin and\
+                       np.allclose(features, self.mergeditems[begin:end]):
+                        featureFound = True
+                    if nbitems == end - begin and\
+                       np.allclose(labels, self.mergedlabels[begin:end]):
+                        labelFound = True
+                        if featureFound:
+                            bothTogether = True
+                            break
+                except ValueError:
+                    print(nbitems)
+                    print(end-begin)
+                    print(len(features))
+                    print(len(labels))
+                    print(begin)
+                    print(end)
+                    print(len(self.mergeditems[begin:end]))
+                    print(len(self.mergedlabels[begin:end]))
+            if bothTogether:
+                print("%d Found!" % i)
+                nbfound += 1
             else:
-                nbreturned = 0
-            print("%d/%d returned" % (nbreturned, choice.size))
+                if featureFound and labelFound:
+                    print("%d found but not together" % i)
+                elif featureFound:
+                    print(len(labels))
+                    print(len(self.mergedlabels[begin:end]))
+                    print("%d feature found only" % i)
+                elif labelFound:
+                    print(len(features))
+                    print(len(self.mergeditems[begin:end]))
+                    print("%d label found only" % i)
+                else:
+                    print("%d not found" % i)
 
-        try:
-            begin = self.siii[choice]
-            end = begin + self.nbitemsinsample[choice]
-
-            assert nbsamples == end - begin
-            assert np.allclose(features, self.mergeditems[begin:end])
-            assert np.allclose(labels, self.mergedlabels[begin:end])
-        except AssertionError:
-            print("nbs mysql: %d\tnbs new:%d" % (nbsamples, end-begin))
-            print(features)
-            print(self.mergeditems[begin:end])
-            print()
-            print(labels)
-            print(self.mergedlabels[begin:end])
-            print('T' if np.allclose(labels, self.mergedlabels[begin:end]) else 'F')
-            print()
+        print("nbfound %d/%d" % (nbfound, self.nbsamples))
 
     def getfulltests(self):
         self.dataloaded.wait()
