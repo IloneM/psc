@@ -5,8 +5,6 @@ cpu_count = lambda: 20
 #Thread = Process
 from os.path import join
 from extractfeatures import ExtractMonoAudioFiles as emaf
-from extractfeaturesmysql import ExtractMonoAudioFiles as emafms
-import feedermysql as fm
 
 #We have several (~2000) files which are here refered as "samples".
 #Each file has several lines of featured content which are refered as "items".
@@ -93,7 +91,7 @@ class Feeder:
         self.dataloaded.set()
             
     def __init__(self, inpath, opts={}):
-        defopts = {'examplesratio': 0.95, 'beginlearningratio': .75, 'deep': False, 'deepbatchsize': 64}
+        defopts = {'examplesratio': 0.95, 'beginlearningratio': .25, 'deep': False, 'deepbatchsize': 64}
         defopts.update(opts)
         self.opts = opts = defopts
 
@@ -148,8 +146,6 @@ class Feeder:
 
         self.testsampleit = None
 
-        self.myslqtest = fm.AudioFeederContext(opts)
-
     def getdeepbatch(self, batchsize=None, deepbatchsize=None):
         self.learnable.wait()
 
@@ -197,79 +193,6 @@ class Feeder:
 
         batchfeatures, batchlabels = (self.mergeditems[choice], self.mergedlabels[choice])
         return (batchfeatures, batchlabels)
-
-    def challengethis(self):
-        self.dataloaded.wait()
-
-        #samplestosearch = self.samplesready[:]
-        samplestosearch = self.samplesready
-
-        nbfound = 0
-
-        for i in range(self.nbsamples):
-            #frommysql = self.myslqtest.db.get(emafms.tablecontext, self.samplesready[choice], idfield='sample_id')
-            frommysql = self.myslqtest.db.get(emafms.tablecontext, i, idfield='sample_id')
-
-            nbitems = len(frommysql)
-            features = np.zeros(shape=(nbitems, self.nbfeatures))
-            labels = np.zeros(shape=(nbitems, self.nblabels))
-
-            try:
-                for j in range(nbitems):
-                    line = list(frommysql[j])
-                    features[j] = line[3:]
-                    labels[j, line[1]] = 1.
-            except IndexError:
-                if frommysql is not None:
-                    nbreturned = len(frommysql)
-                else:
-                    nbreturned = 0
-                print("%d/%d returned" % (nbreturned, nbitems))
-
-            labelFound = False
-            featureFound = False
-            bothTogether = False
-            for sampleid in range(len(samplestosearch)):
-                begin = self.siii[sampleid]
-                end = begin + self.nbitemsinsample[sampleid]
-
-                try:
-                    if nbitems == end - begin and\
-                       np.allclose(features, self.mergeditems[begin:end]):
-                        featureFound = True
-                    if nbitems == end - begin and\
-                       np.allclose(labels, self.mergedlabels[begin:end]):
-                        labelFound = True
-                        if featureFound:
-                            bothTogether = True
-                            break
-                except ValueError:
-                    print(nbitems)
-                    print(end-begin)
-                    print(len(features))
-                    print(len(labels))
-                    print(begin)
-                    print(end)
-                    print(len(self.mergeditems[begin:end]))
-                    print(len(self.mergedlabels[begin:end]))
-            if bothTogether:
-                print("%d Found!" % i)
-                nbfound += 1
-            else:
-                if featureFound and labelFound:
-                    print("%d found but not together" % i)
-                elif featureFound:
-                    print(len(labels))
-                    print(len(self.mergedlabels[begin:end]))
-                    print("%d feature found only" % i)
-                elif labelFound:
-                    print(len(features))
-                    print(len(self.mergeditems[begin:end]))
-                    print("%d label found only" % i)
-                else:
-                    print("%d not found" % i)
-
-        print("nbfound %d/%d" % (nbfound, self.nbsamples))
 
     def getfulltests(self):
         self.dataloaded.wait()
